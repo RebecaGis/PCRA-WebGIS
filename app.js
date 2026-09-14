@@ -3119,25 +3119,59 @@
     const btnDownloadCsv = document.getElementById("admin-download-adjusted-csv-btn");
     const btnCopyCoords = document.getElementById("admin-copy-coords-btn");
 
-    if (btnToggle) {
-      btnToggle.addEventListener("click", function () {
-        if (editModeState.isActive) {
-          toggleEditMode(false);
-          return;
+    function openAuthModal() {
+      if (modalAuth) {
+        if (msgAuthError) {
+          msgAuthError.style.display = "none";
+          msgAuthError.textContent = "";
         }
-        // Check session auth
-        if (sessionStorage.getItem("pcra_auth_georebs") === "true") {
-          toggleEditMode(true);
-        } else {
-          if (modalAuth) {
-            if (msgAuthError) msgAuthError.style.display = "none";
-            if (inputAuthEmail) inputAuthEmail.value = "";
-            modalAuth.classList.add("open");
-            setTimeout(function () { if (inputAuthEmail) inputAuthEmail.focus(); }, 150);
-          }
-        }
-      });
+        if (inputAuthEmail) inputAuthEmail.value = "";
+        modalAuth.classList.add("open");
+        setTimeout(function () { if (inputAuthEmail) inputAuthEmail.focus(); }, 150);
+      }
     }
+
+    function handleToggleClick(e) {
+      if (e) {
+        e.preventDefault();
+        e.stopPropagation();
+      }
+      if (editModeState.isActive) {
+        toggleEditMode(false);
+        return;
+      }
+      // Check session auth
+      if (sessionStorage.getItem("pcra_auth_georebs") === "true") {
+        toggleEditMode(true);
+      } else {
+        openAuthModal();
+      }
+    }
+
+    if (btnToggle) {
+      btnToggle.addEventListener("click", handleToggleClick);
+    }
+
+    // Document-level fallback delegation for admin toggle button
+    document.addEventListener("click", function (e) {
+      const toggle = e.target.closest("#admin-edit-points-btn");
+      if (toggle) {
+        handleToggleClick(e);
+        return;
+      }
+      const closeAuth = e.target.closest("#admin-auth-close-btn");
+      if (closeAuth && modalAuth) {
+        e.preventDefault();
+        modalAuth.classList.remove("open");
+        return;
+      }
+      const closeSummary = e.target.closest("#admin-summary-close-btn");
+      if (closeSummary && modalSummary) {
+        e.preventDefault();
+        modalSummary.classList.remove("open");
+        return;
+      }
+    });
 
     if (btnAuthClose && modalAuth) {
       btnAuthClose.addEventListener("click", function () { modalAuth.classList.remove("open"); });
@@ -3146,7 +3180,10 @@
       });
     }
 
-    function handleAuthSubmit() {
+    function handleAuthSubmit(e) {
+      if (e) {
+        e.preventDefault();
+      }
       if (!inputAuthEmail) return;
       const email = inputAuthEmail.value.trim();
       if (isUserAuthorized(email)) {
@@ -3165,7 +3202,7 @@
     if (btnAuthSubmit) btnAuthSubmit.addEventListener("click", handleAuthSubmit);
     if (inputAuthEmail) {
       inputAuthEmail.addEventListener("keydown", function (e) {
-        if (e.key === "Enter") handleAuthSubmit();
+        if (e.key === "Enter") handleAuthSubmit(e);
       });
     }
 
