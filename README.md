@@ -10,6 +10,7 @@
 ---
 
 ## 📖 Sobre a Plataforma
+https://plataforma-pcra-pqburnier.netlify.app/
 
 A plataforma **WebGIS PCRA** é uma aplicação cartográfica e analítica moderna desenvolvida para o acompanhamento em tempo real das ações do **Plano Comunitário de Redução de Riscos (PCRA)** na comunidade Parque Burnier (bairros Costa Carvalho e Jardim da Lua), em Juiz de Fora (MG).
 
