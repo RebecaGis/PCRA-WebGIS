@@ -1,0 +1,15 @@
+# Operating System & IDE Files
+.DS_Store
+Thumbs.db
+[Dd]esktop.ini
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Netlify CLI & Node
+node_modules/
+.netlify/
+
+# Logs
+*.log

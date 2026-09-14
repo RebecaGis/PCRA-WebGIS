@@ -1,0 +1,18 @@
+[build]
+  publish = "."
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    Access-Control-Allow-Origin = "*"
+    X-Frame-Options = "ALLOWALL"
+
+[[headers]]
+  for = "/tiles_ortofoto/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+[[headers]]
+  for = "/tiles_declividade/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"

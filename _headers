@@ -1,0 +1,9 @@
+/*
+  Access-Control-Allow-Origin: *
+  X-Frame-Options: ALLOWALL
+
+/tiles_ortofoto/*
+  Cache-Control: public, max-age=31536000, immutable
+
+/tiles_declividade/*
+  Cache-Control: public, max-age=31536000, immutable

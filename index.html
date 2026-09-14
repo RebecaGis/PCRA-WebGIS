@@ -1,0 +1,883 @@
+<!DOCTYPE html>
+<html lang="pt-BR" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="referrer" content="no-referrer">
+  <title>PCRA Costa Carvalho · Painel de Acompanhamento e WebGIS de Campo</title>
+  
+  <!-- Leaflet & Plugins -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+  
+  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css"/>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css"/>
+  <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
+  
+  <!-- PapaParse for Google Sheets CSV parsing -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+  
+  <!-- jsPDF, html2canvas, JSZip & FileSaver for Cartographic PDF Map Generation and Layer Downloads -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+  
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+  
+  <!-- Custom Styles -->
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <!-- Top Navigation Bar -->
+  <header class="app-header">
+    <div class="header-brand">
+      <!-- Institutional Logos -->
+      <div class="header-logos-wrapper">
+        <img id="logo-periferia" class="header-logo-img logo-periferia" alt="Periferia Sem Risco" title="Periferia Sem Risco">
+        <span class="logo-divider"></span>
+        <img id="logo-planos" class="header-logo-img logo-planos" alt="Planos Comunitários" title="Planos Comunitários de Redução de Riscos (PCRA)">
+        <span class="logo-divider"></span>
+        <img id="logo-ministerio" class="header-logo-img logo-ministerio" alt="Ministério das Cidades" title="Ministério das Cidades - Governo Federal">
+      </div>
+
+      <div class="header-title-box">
+        <h1 class="header-title">PCRA · Costa Carvalho & Jardim da Lua</h1>
+        <p class="header-subtitle">Painel de Acompanhamento de Campo & Diagnóstico de Risco</p>
+      </div>
+    </div>
+
+    <div class="header-actions">
+      <!-- Sync Status Badge -->
+      <div id="sync-status-badge" class="sync-badge" title="Status de conexão com o Google Sheets">
+        <span id="sync-pulse" class="sync-pulse"></span>
+        <span id="sync-text">Conectando...</span>
+      </div>
+
+      <!-- Sync Button -->
+      <button id="sync-btn" class="btn btn-icon" title="Atualizar dados da planilha agora">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
+        <span>Atualizar</span>
+      </button>
+
+      <!-- Import Layer Button (Opção 3) -->
+      <button id="import-layer-btn" class="btn btn-secondary btn-icon" title="Importar arquivo GeoJSON, KML ou CSV para visualização">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+        <span>Importar Dados</span>
+      </button>
+
+      <!-- Export / Download Layers Button -->
+      <button id="export-btn" class="btn btn-secondary btn-icon" title="Exportar dados e baixar camadas SIG">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        <span>Baixar Camadas</span>
+      </button>
+
+      <!-- PDF Map Generator Button -->
+      <button id="open-pdf-map-btn" class="btn btn-primary btn-icon" title="Gerar e Salvar Prancha de Mapa em PDF (A0, A1, A2, A3)">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+        <span>Mapa em PDF</span>
+      </button>
+
+      <!-- Theme Toggle -->
+      <button id="theme-toggle" class="btn btn-icon btn-square" title="Alternar Modo Escuro / Claro">
+        <svg class="theme-icon-light" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+        <svg class="theme-icon-dark" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <!-- KPI Metrics Ribbon -->
+  <section class="kpi-ribbon">
+    <div class="kpi-card">
+      <span class="kpi-label">Vistorias Realizadas</span>
+      <div class="kpi-value" id="kpi-total-val">—</div>
+      <span class="kpi-subtext">Costa Carvalho / Jd. Lua</span>
+    </div>
+
+    <div class="kpi-card danger">
+      <span class="kpi-label">Alto Risco (R4 / R5)</span>
+      <div class="kpi-value" id="kpi-high-risk-val">—</div>
+      <span class="kpi-subtext">Atenção Crítica / Imediata</span>
+    </div>
+
+    <div class="kpi-card info">
+      <span class="kpi-label">Risco Médio Geral</span>
+      <div class="kpi-value" id="kpi-avg-risk-val">—</div>
+      <span class="kpi-subtext">Escala de 1 a 5 (Agente)</span>
+    </div>
+
+    <div class="kpi-card warning">
+      <span class="kpi-label">Vulnerabilidade Social</span>
+      <div class="kpi-value" id="kpi-vulnerable-val">—</div>
+      <span class="kpi-subtext">Mobilidade, Medicação ou Laudo</span>
+    </div>
+
+    <div class="kpi-card success">
+      <span class="kpi-label">Precisão Média GPS</span>
+      <div class="kpi-value" id="kpi-gps-val">—</div>
+      <span class="kpi-subtext">Geolocalização em Campo</span>
+    </div>
+  </section>
+
+  <!-- Main App Layout -->
+  <main class="app-main-layout">
+    <!-- Sidebar Left -->
+    <aside class="sidebar-panel">
+      <!-- Search Box -->
+      <div class="search-box-wrapper">
+        <div class="search-input-box">
+          <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <input type="text" id="search-input" placeholder="Buscar por morador, endereço, agente, ID...">
+          <button id="clear-search-btn" class="clear-btn" style="display:none;" title="Limpar busca">✕</button>
+        </div>
+      </div>
+
+      <!-- Filters Section -->
+      <div class="filters-panel">
+        <div class="filter-row-grid">
+          <div class="filter-col">
+            <label class="filter-label">Métrica de Risco no Mapa</label>
+            <select id="metric-select" class="filter-select">
+              <option value="agent">Classificação do Agente</option>
+              <option value="resident">Percepção do Morador</option>
+              <option value="diff">Divergência (Agente vs Morador)</option>
+            </select>
+          </div>
+          <div class="filter-col">
+            <label class="filter-label">Nível de Risco</label>
+            <select id="risk-select" class="filter-select">
+              <option value="all">Todos os Níveis</option>
+              <option value="high">Apenas Alto Risco (R4 - R5)</option>
+              <option value="1">Risco 1 (Baixo / Muito Baixo)</option>
+              <option value="2">Risco 2 (Médio-Baixo)</option>
+              <option value="3">Risco 3 (Médio)</option>
+              <option value="4">Risco 4 (Alto)</option>
+              <option value="5">Risco 5 (Muito Alto)</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="filter-row-grid" style="margin-top:8px;">
+          <div class="filter-col">
+            <label class="filter-label">Agente Responsável</label>
+            <select id="agent-select" class="filter-select">
+              <option value="all">Todos os Agentes</option>
+            </select>
+          </div>
+          <div class="filter-col">
+            <label class="filter-label">Data da Vistoria</label>
+            <select id="date-select" class="filter-select">
+              <option value="all">Todas as Datas</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Quick Filter Chips -->
+        <div class="quick-chips-wrapper">
+          <span class="quick-chips-title">Filtros Rápidos de Vulnerabilidade & Risco:</span>
+          <div class="chips-list">
+            <button class="chip-btn" data-filter="mobility">♿ Mobilidade Reduzida</button>
+            <button class="chip-btn" data-filter="medication">💊 Medicação Controlada</button>
+            <button class="chip-btn" data-filter="laudo">📋 Laudo Defesa Civil</button>
+            <button class="chip-btn" data-filter="deslizamento">⚠️ Deslizamento</button>
+            <button class="chip-btn" data-filter="children">👶 Crianças</button>
+            <button class="chip-btn" data-filter="elderly">👵 Idosos</button>
+            <button class="chip-btn" data-filter="animals">🐾 Animais</button>
+            <button class="chip-btn" data-filter="photos">📸 Com Fotos</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Navigation Tabs -->
+      <div class="sidebar-tabs-nav">
+        <button class="sidebar-tab-btn active" data-tab="list">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+          <span>Lista (<span id="points-badge">0</span>)</span>
+        </button>
+        <button class="sidebar-tab-btn" data-tab="details">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+          <span>Ficha do Ponto</span>
+        </button>
+        <button class="sidebar-tab-btn" data-tab="analytics">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+          <span>Estatísticas</span>
+        </button>
+      </div>
+
+      <!-- Tab Content Panels -->
+      <div class="sidebar-content-scroll">
+        <!-- Tab 1: Points List -->
+        <div id="tab-list" class="sidebar-tab-content active">
+          <div id="points-list" class="points-cards-container">
+            <!-- Dynamically rendered point cards -->
+          </div>
+        </div>
+
+        <!-- Tab 2: Point Full Inspection Details -->
+        <div id="tab-details" class="sidebar-tab-content" style="display:none;">
+          <div id="detail-container" class="detail-container">
+            <div class="detail-empty-state">
+              <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><path d="M12 8v4"/><path d="M12 16h.01"/></svg>
+              <h3>Nenhum ponto selecionado</h3>
+              <p>Clique em um marcador no mapa ou em um item da lista para abrir o formulário cadastral completo e as fotografias.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tab 3: Analytics & Statistics -->
+        <div id="tab-analytics" class="sidebar-tab-content" style="display:none;">
+          <div class="analytics-wrapper">
+            <div class="analytics-block">
+              <h4 class="analytics-title">Distribuição por Nível de Risco (Agente)</h4>
+              <div id="chart-risk-bars" class="horizontal-bars-chart"></div>
+            </div>
+
+            <div class="analytics-block">
+              <h4 class="analytics-title">Progresso Diário das Vistorias</h4>
+              <div id="chart-days-bars" class="horizontal-bars-chart"></div>
+            </div>
+
+            <div class="analytics-block">
+              <h4 class="analytics-title">Produtividade por Agente de Campo</h4>
+              <div id="chart-agents-bars" class="horizontal-bars-chart"></div>
+            </div>
+
+            <div class="analytics-block">
+              <h4 class="analytics-title">Fatores de Vulnerabilidade e Risco Detectados</h4>
+              <div id="chart-vulnerabilities" class="horizontal-bars-chart"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Map Viewport -->
+    <div class="map-viewport-wrapper">
+      <div id="map-view" class="map-view"></div>
+
+      <!-- Floating WebGIS Tools Widget (Top Left: Medição & Desenho/Anotação) -->
+      <div id="map-tools-widget" class="floating-map-widget map-tools-widget">
+        <div class="tools-widget-header">
+          <div style="display:flex;align-items:center;gap:5px;">
+            <span style="font-size:0.95rem;">🛠️</span>
+            <span class="tools-widget-title">Ferramentas</span>
+          </div>
+          <div class="tools-tabs-nav">
+            <button id="tools-tab-measure" class="tools-tab-btn active" title="Ferramentas de Medição (Distância e Área)">📐 Medir</button>
+            <button id="tools-tab-draw" class="tools-tab-btn" title="Ferramentas de Desenho e Anotação (Texto, Setas, Polígonos)">✏️ Desenhar</button>
+          </div>
+        </div>
+
+        <!-- Tab 1: Medição -->
+        <div id="tools-measure-panel" class="tools-panel-content">
+          <div class="measure-buttons-row">
+            <button id="measure-distance-btn" class="measure-btn" title="Medir distância linear / trajeto no mapa">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M2 12h20M2 12l5-5m-5 5l5 5M22 12l-5-5m5 5l-5 5"/></svg>
+              <span>Distância</span>
+            </button>
+            <button id="measure-area-btn" class="measure-btn" title="Medir área poligonal / superfície no mapa">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polygon points="12 2 22 8.5 18 21 6 21 2 8.5 12 2"/></svg>
+              <span>Área</span>
+            </button>
+            <button id="measure-clear-btn" class="measure-btn measure-btn-clear" title="Limpar medições ativas">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+              <span>Limpar</span>
+            </button>
+          </div>
+
+          <!-- Live Measurement Output Panel -->
+          <div id="measure-result-box" class="measure-result-box" style="display:none;">
+            <div class="measure-result-header">
+              <span id="measure-mode-label" class="measure-mode-label">📏 Medindo Distância</span>
+              <span id="measure-instruction" class="measure-instruction">Clique no mapa para adicionar pontos</span>
+            </div>
+            <div class="measure-values-grid">
+              <div class="measure-value-item">
+                <span class="measure-val-title" id="measure-primary-title">Total:</span>
+                <strong class="measure-val-main" id="measure-primary-val">—</strong>
+              </div>
+              <div class="measure-value-item" id="measure-secondary-item" style="display:none;">
+                <span class="measure-val-title" id="measure-secondary-title">Perímetro:</span>
+                <strong class="measure-val-sub" id="measure-secondary-val">—</strong>
+              </div>
+            </div>
+            <div class="measure-actions-bar">
+              <button id="measure-finish-btn" class="measure-action-finish-btn" title="Concluir medição">✓ Concluir</button>
+              <span class="measure-hint-text">2 cliques ou Esc para finalizar</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tab 2: Desenho & Anotações -->
+        <div id="tools-draw-panel" class="tools-panel-content" style="display:none;">
+          <div class="draw-tools-grid">
+            <button id="draw-text-btn" class="draw-tool-btn" title="Adicionar texto / rótulo no mapa">
+              <span class="tool-icon">✏️</span>
+              <span>Texto</span>
+            </button>
+            <button id="draw-arrow-btn" class="draw-tool-btn" title="Desenhar seta indicadora / sentido de fluxo">
+              <span class="tool-icon">↗️</span>
+              <span>Seta</span>
+            </button>
+            <button id="draw-polygon-btn" class="draw-tool-btn" title="Desenhar polígono livre com cálculo de área">
+              <span class="tool-icon">🛑</span>
+              <span>Polígono</span>
+            </button>
+            <button id="draw-line-btn" class="draw-tool-btn" title="Desenhar linha / trinca / trajeto">
+              <span class="tool-icon">〰️</span>
+              <span>Linha</span>
+            </button>
+          </div>
+
+          <!-- Color Selector Row -->
+          <div class="draw-options-row">
+            <span class="draw-options-label">Cor do Traço:</span>
+            <div class="draw-color-picker">
+              <button class="draw-color-dot active" data-color="#dc2626" style="background:#dc2626;" title="Vermelho"></button>
+              <button class="draw-color-dot" data-color="#ea580c" style="background:#ea580c;" title="Laranja"></button>
+              <button class="draw-color-dot" data-color="#eab308" style="background:#eab308;" title="Amarelo"></button>
+              <button class="draw-color-dot" data-color="#16a34a" style="background:#16a34a;" title="Verde"></button>
+              <button class="draw-color-dot" data-color="#2563eb" style="background:#2563eb;" title="Azul"></button>
+              <button class="draw-color-dot" data-color="#9333ea" style="background:#9333ea;" title="Roxo"></button>
+              <button class="draw-color-dot" data-color="#1f2937" style="background:#1f2937;" title="Preto"></button>
+            </div>
+          </div>
+
+          <!-- Active Drawing Status & Actions -->
+          <div id="draw-active-box" class="draw-active-box" style="display:none;">
+            <div class="draw-active-header">
+              <span id="draw-active-mode-title" class="draw-active-title">✏️ Desenhando</span>
+              <span id="draw-instruction-text" class="draw-instruction-text">Clique no mapa para posicionar</span>
+            </div>
+            <div class="draw-actions-row">
+              <button id="draw-finish-btn" class="btn-draw-action btn-draw-finish" style="display:none;">✓ Concluir</button>
+              <button id="draw-cancel-btn" class="btn-draw-action btn-draw-cancel">✕ Cancelar</button>
+            </div>
+          </div>
+
+          <!-- Manage Drawings Bar -->
+          <div class="drawings-management-bar">
+            <span id="drawings-count-badge" class="drawings-count-badge">0 desenhos</span>
+            <div style="display:flex;align-items:center;gap:4px;">
+              <button id="draw-undo-btn" class="btn-draw-util" title="Desfazer último desenho adicionado">↺ Desfazer</button>
+              <button id="draw-clear-all-btn" class="btn-draw-util btn-draw-danger" title="Limpar todos os desenhos criados">🗑️ Limpar</button>
+              <button id="draw-export-geojson-btn" class="btn-draw-util btn-draw-export" title="Exportar desenhos em GeoJSON">📥 GeoJSON</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Floating Map Layer Controls (Top Right) -->
+      <div class="floating-map-widget map-controls-widget">
+        <div class="map-widget-header">
+          <span>Camadas & Mapa Base</span>
+        </div>
+        
+        <div class="map-widget-section">
+          <span class="map-widget-subtitle">Mapa Base:</span>
+          <div class="basemap-buttons-grid">
+            <button class="basemap-opt-btn" data-basemap="ortofoto">📸 Ortofoto Burnier (Drone)</button>
+            <button class="basemap-opt-btn active" data-basemap="google-hybrid">🛰️ Google Híbrido</button>
+            <button class="basemap-opt-btn" data-basemap="google-satellite">🌍 Google Satélite</button>
+            <button class="basemap-opt-btn" data-basemap="esri-satellite">🛰️ Esri / Maxar</button>
+            <button class="basemap-opt-btn" data-basemap="google-streets">🗺️ Google Vias</button>
+            <button class="basemap-opt-btn" data-basemap="osm">🌐 OpenStreetMap</button>
+            <button class="basemap-opt-btn" data-basemap="carto-voyager">☀️ Carto Claro</button>
+          </div>
+        </div>
+
+        <div class="map-widget-section" style="margin-top:8px;padding-bottom:6px;border-bottom:1.5px solid var(--line);">
+          <span class="map-widget-subtitle">Visualização dos Pontos de Levantamento:</span>
+          <div style="display:flex;flex-direction:column;gap:5px;">
+            <label class="layer-item" style="font-weight:700;color:var(--forest-dark);cursor:pointer;">
+              <input type="checkbox" id="toggle-points-visible-chk" checked>
+              <span>📍 Pontos de Levantamento (Vistorias)</span>
+            </label>
+            <label class="layer-item" id="clustering-label-wrapper" style="font-weight:600;color:var(--muted);cursor:pointer;padding-left:16px;font-size:0.72rem;">
+              <input type="checkbox" id="toggle-clustering-chk" checked>
+              <span>🔵 Agrupar em Clusters</span>
+            </label>
+          </div>
+        </div>
+
+        <div class="map-widget-section" style="margin-top:8px;">
+          <span class="map-widget-subtitle">Camadas de Referência Territorial:</span>
+          <div class="layers-checklist">
+            <!-- Ortofoto de Alta Resolução Sobreposta com Slider de Opacidade -->
+            <div class="ortofoto-layer-box">
+              <label class="layer-item">
+                <input type="checkbox" id="toggle-ortofoto-overlay-chk" class="layer-toggle-checkbox" data-layer="ortofoto_overlay">
+                <span>📸 Ortofoto Sobreposta (Drone)</span>
+              </label>
+              <div id="ortofoto-opacity-control" class="ortofoto-opacity-control">
+                <span class="ortofoto-opacity-label-text">Opacidade:</span>
+                <input type="range" id="ortofoto-opacity-slider" class="ortofoto-opacity-slider" min="10" max="100" value="85">
+                <span id="ortofoto-opacity-label" class="ortofoto-opacity-value-badge">85%</span>
+              </div>
+            </div>
+
+            <!-- Declividade Classes de Relevo (Recorte ADES HIS) com Slider de Opacidade -->
+            <div class="ortofoto-layer-box declividade-layer-box">
+              <label class="layer-item">
+                <input type="checkbox" id="toggle-declividade-overlay-chk" class="layer-toggle-checkbox" data-layer="declividade_overlay">
+                <span>⛰️ Declividade (0-30-45% · ADES HIS)</span>
+              </label>
+              <div id="declividade-opacity-control" class="ortofoto-opacity-control">
+                <span class="ortofoto-opacity-label-text">Opacidade:</span>
+                <input type="range" id="declividade-opacity-slider" class="ortofoto-opacity-slider" min="10" max="100" value="80">
+                <span id="declividade-opacity-label" class="ortofoto-opacity-value-badge">80%</span>
+              </div>
+              <div class="declividade-mini-legend">
+                <span class="dec-leg-item"><span class="dec-leg-chip" style="background:#63b35d;"></span> 0-30%</span>
+                <span class="dec-leg-item"><span class="dec-leg-chip" style="background:#ffc107;"></span> 30-45%</span>
+                <span class="dec-leg-item"><span class="dec-leg-chip" style="background:#c62828;"></span> &gt;45%</span>
+              </div>
+            </div>
+
+            <label class="layer-item"><input type="checkbox" class="layer-toggle-checkbox" data-layer="area_atuacao_pcra"> <span class="layer-symbol-polygon" style="border-color:#16a34a;background:rgba(22,163,74,0.25);"></span> 📍 Área de Atuação PCRA (Burnier)</label>
+            <label class="layer-item"><input type="checkbox" class="layer-toggle-checkbox" data-layer="areas_prioritarias"> <span class="layer-symbol-polygon" style="border-color:#f43f5e;background:rgba(244,63,94,0.30);"></span> 🎯 Áreas Prioritárias (Plano de Ação)</label>
+            <label class="layer-item"><input type="checkbox" class="layer-toggle-checkbox" data-layer="ades_his"> <span class="layer-symbol-polygon" style="border-color:#7c3aed;background:rgba(124,58,237,0.25);"></span> ADES HIS Parque Burnier</label>
+            <label class="layer-item"><input type="checkbox" class="layer-toggle-checkbox" data-layer="risco_geologico"> <span class="layer-symbol-polygon" style="border-color:#dc2626;background:rgba(239,68,68,0.35);"></span> Setores Risco Geológico (R1-R4)</label>
+            <label class="layer-item"><input type="checkbox" class="layer-toggle-checkbox" data-layer="situacao_edificacoes"> <span class="layer-symbol-point" style="background:#ea580c;border-color:#c2410c;"></span> 🏚️ Situação das Edificações (146 imóveis)</label>
+            <label class="layer-item"><input type="checkbox" class="layer-toggle-checkbox" data-layer="ocorrencias_defesa_civil"> <span class="layer-symbol-point" style="background:#d97706;border-color:#b45309;"></span> ⚠️ Ocorrências Defesa Civil (745 BOs)</label>
+            <label class="layer-item"><input type="checkbox" class="layer-toggle-checkbox" data-layer="area_inaproveitavel"> <span class="layer-symbol-polygon-dashed" style="border-color:#991b1b;background:rgba(220,38,38,0.35);"></span> ⛔ Áreas Inaproveitáveis (6 polígonos)</label>
+            <label class="layer-item"><input type="checkbox" class="layer-toggle-checkbox" data-layer="lotes_caixa"> <span class="layer-symbol-polygon" style="border-color:#0284c7;background:rgba(56,189,248,0.35);"></span> 📦 Lotes Caixa Econômica (59 lotes)</label>
+            <label class="layer-item"><input type="checkbox" class="layer-toggle-checkbox" data-layer="equip_escolas"> <span class="layer-symbol-emoji">🏫</span> Escolas e Creches</label>
+            <label class="layer-item"><input type="checkbox" class="layer-toggle-checkbox" data-layer="equip_saude"> <span class="layer-symbol-emoji">🏥</span> Postos de Saúde</label>
+            <label class="layer-item"><input type="checkbox" class="layer-toggle-checkbox" data-layer="equip_instituicoes_religiosas"> <span class="layer-symbol-emoji">⛪</span> Igrejas / Espaços Comunitários</label>
+          </div>
+        </div>
+
+        <!-- User Imported Layers Section (Dynamic) -->
+        <div id="user-imported-section" class="map-widget-section" style="margin-top:8px; display:none;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+            <span class="map-widget-subtitle" style="margin-bottom:0;">Camadas Importadas:</span>
+            <button id="quick-import-btn" style="background:none; border:none; color:var(--forest); font-size:0.75rem; font-weight:700; cursor:pointer; padding:2px 4px; border-radius:4px;" title="Importar novo arquivo">+ Adicionar</button>
+          </div>
+          <div id="user-imported-layers-list" class="layers-checklist" style="max-height:140px; overflow-y:auto;"></div>
+        </div>
+      </div>
+
+      <!-- Floating Legend (Bottom Left) -->
+      <div class="floating-map-widget map-legend-widget">
+        <div class="map-widget-header">
+          <span>Legenda de Risco</span>
+        </div>
+        <div class="legend-scale-grid">
+          <div class="legend-scale-item"><span class="legend-chip" style="background:var(--r1);">1</span> <span>R1 · Baixo</span></div>
+          <div class="legend-scale-item"><span class="legend-chip" style="background:var(--r2);">2</span> <span>R2 · Médio-Bx</span></div>
+          <div class="legend-scale-item"><span class="legend-chip" style="background:var(--r3);">3</span> <span>R3 · Médio</span></div>
+          <div class="legend-scale-item"><span class="legend-chip" style="background:var(--r4);">4</span> <span>R4 · Alto</span></div>
+          <div class="legend-scale-item"><span class="legend-chip" style="background:var(--r5);">5</span> <span>R5 · Crítico</span></div>
+        </div>
+      </div>
+    </div>
+  </main>
+ 
+  <!-- Application Footer -->
+  <footer class="app-footer-bar">
+    <div class="footer-left">
+      <span class="footer-project-info">PCRA · Plano Comunitário de Redução de Riscos (Costa Carvalho & Jardim da Lua)</span>
+    </div>
+    <div class="footer-right">
+      <a href="https://github.com/RebecaGis" target="_blank" rel="noopener noreferrer" class="developer-tag" title="Abrir perfil no GitHub (RebecaGis) · Autoria do Desenvolvimento da Aplicação WebGIS">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
+        Desenvolvido por <strong>Rebeca Diniz Moura</strong> · <em>GeoDeveloper</em>
+      </a>
+    </div>
+  </footer>
+
+  <!-- Photo & Document Interactive Lightbox Modal -->
+  <div id="photo-modal" class="modal-lightbox-backdrop">
+    <div class="modal-lightbox-content">
+      <div class="modal-photo-header">
+        <div class="modal-title-box">
+          <span id="modal-photo-caption" class="modal-photo-title">Visualizador de Documento / Fotografia</span>
+        </div>
+        <div class="modal-toolbar-actions">
+          <button id="zoom-out-btn" class="modal-tool-btn" title="Diminuir Zoom ( - )">🔍−</button>
+          <span id="zoom-level-badge" class="zoom-badge">100%</span>
+          <button id="zoom-in-btn" class="modal-tool-btn" title="Aumentar Zoom ( + )">🔍+</button>
+          <button id="zoom-reset-btn" class="modal-tool-btn" title="Ajustar à Tela">↺ Ajustar</button>
+          <button id="rotate-btn" class="modal-tool-btn" title="Girar 90°">⟳ Girar</button>
+          <a id="modal-tab-link" href="#" target="_blank" rel="noopener noreferrer" class="modal-tool-btn" title="Abrir imagem direta em nova aba">🔗 Imagem Direta</a>
+          <a id="modal-drive-link" href="#" target="_blank" rel="noopener noreferrer" class="btn btn-primary" style="font-size:0.75rem;padding:4px 10px;">
+            📂 Google Drive ↗
+          </a>
+          <button id="modal-close-btn" class="modal-lightbox-close" title="Fechar (Esc)">✕</button>
+        </div>
+      </div>
+
+      <div id="modal-viewport" class="modal-image-wrapper">
+        <div id="modal-loader" class="modal-loader-spinner" style="display:none;">
+          <div class="spinner"></div>
+          <span>Carregando em alta resolução...</span>
+        </div>
+        <img id="modal-photo-img" src="" alt="Documento / Fotografia" draggable="false">
+      </div>
+
+      <div class="modal-photo-footer">
+        <span class="modal-tip-text">💡 <strong>Dica:</strong> Use a roda do mouse ou os botões para dar zoom e <strong>arraste</strong> para navegar pelo documento em alta resolução.</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Export & Layer Downloads Modal -->
+  <div id="export-modal" class="modal-lightbox-backdrop">
+    <div class="export-dialog-card" style="max-width:580px;">
+      <div class="export-dialog-header">
+        <h3>Exportar Dados & Camadas SIG</h3>
+        <button id="export-close-btn" class="modal-lightbox-close" style="position:static;font-size:1.1rem;">✕</button>
+      </div>
+
+      <!-- Navigation Tabs in Modal -->
+      <div class="export-tabs-nav">
+        <button class="export-tab-btn active" data-target="tab-export-survey">📍 Vistorias de Campo</button>
+        <button class="export-tab-btn" data-target="tab-export-layers">🗺️ Camadas Territoriais (SIG)</button>
+      </div>
+
+      <!-- Tab 1: Survey Records -->
+      <div id="tab-export-survey" class="export-tab-content active">
+        <p style="font-size:0.82rem;color:var(--text-muted);margin:8px 0 14px 0;">
+          Exportar todos os registros de vistorias visíveis conforme os filtros ativos:
+        </p>
+        <div class="export-options-list">
+          <button id="export-geojson-btn" class="export-option-card">
+            <div class="export-opt-icon">🗺️</div>
+            <div>
+              <strong>GeoJSON Espacial (.geojson)</strong>
+              <p>Compatível com QGIS, ArcGIS, Mapbox, Google Earth e bancos GIS.</p>
+            </div>
+          </button>
+          <button id="export-csv-btn" class="export-option-card">
+            <div class="export-opt-icon">📊</div>
+            <div>
+              <strong>Tabela CSV / Excel (.csv)</strong>
+              <p>Arquivo com separador ponto e vírgula e codificação UTF-8 BOM.</p>
+            </div>
+          </button>
+          <button id="export-kml-survey-btn" class="export-option-card">
+            <div class="export-opt-icon">🌐</div>
+            <div>
+              <strong>Google Earth KML (.kml)</strong>
+              <p>Pontos de vistoria com popups para Google Earth Pro e Web.</p>
+            </div>
+          </button>
+          <button id="print-report-btn" class="export-option-card">
+            <div class="export-opt-icon">🖨️</div>
+            <div>
+              <strong>Imprimir Relatório Rápido</strong>
+              <p>Diálogo de impressão formatado para relatório gerencial.</p>
+            </div>
+          </button>
+        </div>
+      </div>
+
+      <!-- Tab 2: GIS Layers Download -->
+      <div id="tab-export-layers" class="export-tab-content">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin:8px 0 12px 0;">
+          <span style="font-size:0.80rem;color:var(--text-muted);">Baixar camadas vetoriais individuais ou o pacote completo:</span>
+          <button id="download-all-zip-btn" class="btn btn-primary" style="font-size:0.75rem;padding:5px 10px;">
+            📦 Baixar Todas (.ZIP)
+          </button>
+        </div>
+
+        <div class="layers-download-grid">
+          <!-- Situação das Edificações -->
+          <div class="layer-dl-row">
+            <div class="layer-dl-info">
+              <span class="layer-dl-badge" style="background:#ea580c;">🏚️</span>
+              <div>
+                <strong>Situação das Edificações</strong>
+                <span>146 imóveis (Interditadas, Destruídas, Atingidas, Adjacentes)</span>
+              </div>
+            </div>
+            <div class="layer-dl-actions">
+              <button class="btn-dl-fmt" data-dl-layer="situacao_edificacoes" data-dl-fmt="geojson">GeoJSON</button>
+              <button class="btn-dl-fmt" data-dl-layer="situacao_edificacoes" data-dl-fmt="kml">KML</button>
+              <button class="btn-dl-fmt" data-dl-layer="situacao_edificacoes" data-dl-fmt="csv">CSV</button>
+            </div>
+          </div>
+
+          <!-- Histórico de Ocorrências Defesa Civil -->
+          <div class="layer-dl-row">
+            <div class="layer-dl-info">
+              <span class="layer-dl-badge" style="background:#d97706;">⚠️</span>
+              <div>
+                <strong>Ocorrências Defesa Civil</strong>
+                <span>745 boletins registrados no Parque Burnier</span>
+              </div>
+            </div>
+            <div class="layer-dl-actions">
+              <button class="btn-dl-fmt" data-dl-layer="ocorrencias_defesa_civil" data-dl-fmt="geojson">GeoJSON</button>
+              <button class="btn-dl-fmt" data-dl-layer="ocorrencias_defesa_civil" data-dl-fmt="kml">KML</button>
+              <button class="btn-dl-fmt" data-dl-layer="ocorrencias_defesa_civil" data-dl-fmt="csv">CSV</button>
+            </div>
+          </div>
+
+          <!-- Áreas Inaproveitáveis -->
+          <div class="layer-dl-row">
+            <div class="layer-dl-info">
+              <span class="layer-dl-badge" style="background:#b91c1c;">⛔</span>
+              <div>
+                <strong>Áreas Inaproveitáveis</strong>
+                <span>6 polígonos (26.429 m² de restrição geotécnica)</span>
+              </div>
+            </div>
+            <div class="layer-dl-actions">
+              <button class="btn-dl-fmt" data-dl-layer="area_inaproveitavel" data-dl-fmt="geojson">GeoJSON</button>
+              <button class="btn-dl-fmt" data-dl-layer="area_inaproveitavel" data-dl-fmt="kml">KML</button>
+            </div>
+          </div>
+
+          <!-- Lotes Caixa -->
+          <div class="layer-dl-row">
+            <div class="layer-dl-info">
+              <span class="layer-dl-badge" style="background:#0284c7;">📦</span>
+              <div>
+                <strong>Lotes Caixa Econômica</strong>
+                <span>59 lotes cadastrados (18.858 m²)</span>
+              </div>
+            </div>
+            <div class="layer-dl-actions">
+              <button class="btn-dl-fmt" data-dl-layer="lotes_caixa" data-dl-fmt="geojson">GeoJSON</button>
+              <button class="btn-dl-fmt" data-dl-layer="lotes_caixa" data-dl-fmt="kml">KML</button>
+            </div>
+          </div>
+
+          <!-- Setores de Risco Geológico -->
+          <div class="layer-dl-row">
+            <div class="layer-dl-info">
+              <span class="layer-dl-badge" style="background:#ef4444;">🏔️</span>
+              <div>
+                <strong>Setores de Risco Geológico</strong>
+                <span>Polígonos setorizados R1, R2, R3 e R4</span>
+              </div>
+            </div>
+            <div class="layer-dl-actions">
+              <button class="btn-dl-fmt" data-dl-layer="risco_geologico" data-dl-fmt="geojson">GeoJSON</button>
+              <button class="btn-dl-fmt" data-dl-layer="risco_geologico" data-dl-fmt="kml">KML</button>
+            </div>
+          </div>
+
+          <!-- Área de Atuação PCRA Parque Burnier -->
+          <div class="layer-dl-row">
+            <div class="layer-dl-info">
+              <span class="layer-dl-badge" style="background:#16a34a;">📍</span>
+              <div>
+                <strong>Área de Atuação PCRA (Burnier)</strong>
+                <span>Polígono perimetral de atuação do projeto (17,49 ha)</span>
+              </div>
+            </div>
+            <div class="layer-dl-actions">
+              <button class="btn-dl-fmt" data-dl-layer="area_atuacao_pcra" data-dl-fmt="geojson">GeoJSON</button>
+              <button class="btn-dl-fmt" data-dl-layer="area_atuacao_pcra" data-dl-fmt="kml">KML</button>
+            </div>
+          </div>
+
+          <!-- Áreas Prioritárias (Plano de Ação) -->
+          <div class="layer-dl-row">
+            <div class="layer-dl-info">
+              <span class="layer-dl-badge" style="background:#f43f5e;">🎯</span>
+              <div>
+                <strong>Áreas Prioritárias (Plano de Ação)</strong>
+                <span>5 polígonos de intervenção e mitigação de risco (4,24 ha)</span>
+              </div>
+            </div>
+            <div class="layer-dl-actions">
+              <button class="btn-dl-fmt" data-dl-layer="areas_prioritarias" data-dl-fmt="geojson">GeoJSON</button>
+              <button class="btn-dl-fmt" data-dl-layer="areas_prioritarias" data-dl-fmt="kml">KML</button>
+            </div>
+          </div>
+
+          <!-- ADES HIS Parque Burnier -->
+          <div class="layer-dl-row">
+            <div class="layer-dl-info">
+              <span class="layer-dl-badge" style="background:#7c3aed;">🗺️</span>
+              <div>
+                <strong>ADES HIS Parque Burnier</strong>
+                <span>Polígono perimetral de interesse social</span>
+              </div>
+            </div>
+            <div class="layer-dl-actions">
+              <button class="btn-dl-fmt" data-dl-layer="ades_his" data-dl-fmt="geojson">GeoJSON</button>
+              <button class="btn-dl-fmt" data-dl-layer="ades_his" data-dl-fmt="kml">KML</button>
+            </div>
+          </div>
+
+          <!-- Equipamentos Comunitários -->
+          <div class="layer-dl-row">
+            <div class="layer-dl-info">
+              <span class="layer-dl-badge" style="background:#16a34a;">🏫</span>
+              <div>
+                <strong>Equipamentos Comunitários</strong>
+                <span>Escolas, Saúde e Instituições Religiosas</span>
+              </div>
+            </div>
+            <div class="layer-dl-actions">
+              <button class="btn-dl-fmt" data-dl-layer="equipamentos" data-dl-fmt="geojson">GeoJSON</button>
+              <button class="btn-dl-fmt" data-dl-layer="equipamentos" data-dl-fmt="kml">KML</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PDF Map Generator Modal -->
+  <div id="pdf-map-modal" class="modal-lightbox-backdrop">
+    <div class="export-dialog-card pdf-map-dialog-card" style="max-width:560px;">
+      <div class="export-dialog-header">
+        <h3>🗺️ Gerador de Prancha de Mapa em PDF</h3>
+        <button id="pdf-map-close-btn" class="modal-lightbox-close" style="position:static;font-size:1.1rem;">✕</button>
+      </div>
+
+      <div class="pdf-config-body" style="display:flex;flex-direction:column;gap:12px;margin-top:12px;">
+        <!-- Paper Format Picker -->
+        <div class="pdf-cfg-section">
+          <label class="pdf-cfg-label">1. Formato do Papel (Padrão ISO 216):</label>
+          <div class="format-pills-grid">
+            <button class="format-pill-btn" data-format="A0">
+              <strong>A0</strong>
+              <span>1189 × 841 mm</span>
+              <small>Grande Formato</small>
+            </button>
+            <button class="format-pill-btn" data-format="A1">
+              <strong>A1</strong>
+              <span>841 × 594 mm</span>
+              <small>Prancha Técnica</small>
+            </button>
+            <button class="format-pill-btn" data-format="A2">
+              <strong>A2</strong>
+              <span>594 × 420 mm</span>
+              <small>Formato Médio</small>
+            </button>
+            <button class="format-pill-btn active" data-format="A3">
+              <strong>A3</strong>
+              <span>420 × 297 mm</span>
+              <small>Executivo / Apresentação</small>
+            </button>
+          </div>
+        </div>
+
+        <!-- Orientation Picker -->
+        <div class="pdf-cfg-section">
+          <label class="pdf-cfg-label">2. Orientação da Prancha:</label>
+          <div class="orientation-pills-grid">
+            <button class="orientation-pill-btn active" data-orientation="landscape">
+              <span>📐 Paisagem (Landscape)</span>
+              <small>Padrão Cartográfico Recomendado</small>
+            </button>
+            <button class="orientation-pill-btn" data-orientation="portrait">
+              <span>📄 Retrato (Portrait)</span>
+              <small>Formato Vertical</small>
+            </button>
+          </div>
+        </div>
+
+        <!-- Title & Subtitle Inputs -->
+        <div class="pdf-cfg-section">
+          <label class="pdf-cfg-label">3. Identificação e Título da Prancha:</label>
+          <input type="text" id="pdf-title-input" class="pdf-text-input" value="PLANO COMUNITÁRIO DE REDUÇÃO DE RISCOS (PCRA)" placeholder="Título Principal da Prancha">
+          <input type="text" id="pdf-subtitle-input" class="pdf-text-input" style="margin-top:6px;" value="Diagnóstico Territorial e Mapeamento de Risco · Parque Burnier" placeholder="Subtítulo / Tema do Mapeamento">
+        </div>
+
+        <!-- Elements Checklist -->
+        <div class="pdf-cfg-section">
+          <label class="pdf-cfg-label">4. Elementos Cartográficos Oficiais:</label>
+          <div class="pdf-elements-checklist">
+            <label class="layer-item"><input type="checkbox" id="pdf-inc-logos" checked> <span>🏛️ Incluir 3 Logos Oficiais no Cabeçalho (Periferia Sem Risco, PCRA, MCID)</span></label>
+            <label class="layer-item"><input type="checkbox" id="pdf-inc-north" checked> <span>🧭 Incluir Rosa dos Ventos / Indicador de Norte (N ↑)</span></label>
+            <label class="layer-item"><input type="checkbox" id="pdf-inc-scale" checked> <span>📏 Incluir Barra de Escala Gráfica e Numérica</span></label>
+            <label class="layer-item"><input type="checkbox" id="pdf-inc-legend" checked> <span>📋 Incluir Quadro de Legenda Dinâmica com Camadas Ativas</span></label>
+            <label class="layer-item"><input type="checkbox" id="pdf-inc-seal" checked> <span>✍️ Incluir Selo Técnico (Metadados SIRGAS 2000 & Autoria Rebeca Diniz)</span></label>
+          </div>
+        </div>
+
+        <!-- Action Button -->
+        <div style="margin-top:6px;">
+          <button id="generate-pdf-submit-btn" class="btn btn-primary" style="width:100%;padding:12px;font-size:0.95rem;font-weight:700;display:flex;align-items:center;justify-content:center;gap:8px;">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+            <span id="pdf-btn-text">Gerar e Salvar Mapa em PDF</span>
+          </button>
+          <div id="pdf-progress-box" style="display:none;margin-top:8px;text-align:center;font-size:0.80rem;color:var(--olive);font-weight:600;">
+            ⏳ Renderizando prancha cartográfica em alta resolução... aguarde...
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Importar Camada / Arquivo Externo (Opção 3) -->
+  <div id="import-layer-modal" class="modal-lightbox-backdrop">
+    <div class="export-dialog-card" style="max-width: 540px;">
+      <div class="export-dialog-header">
+        <div>
+          <h3 style="margin:0; font-size:1.05rem;">📂 Importar Dados & Camadas</h3>
+          <p style="margin:2px 0 0 0; font-size:0.75rem; color:var(--muted);">Carregue arquivos para visualização instantânea no mapa (sem alterar a planilha)</p>
+        </div>
+        <button id="import-layer-close-btn" class="modal-lightbox-close" style="position:static; font-size:1.1rem;" title="Fechar">✕</button>
+      </div>
+
+      <div style="padding: 16px 20px; display: flex; flex-direction: column; gap: 12px;">
+        <!-- Drag & Drop Zone -->
+        <div id="import-dropzone" class="import-dropzone">
+          <input type="file" id="import-file-input" accept=".geojson,.json,.kml,.csv" style="display: none;">
+          <div class="dropzone-icon">📥</div>
+          <div class="dropzone-title">Arraste e solte o arquivo aqui</div>
+          <div class="dropzone-sub">ou <span class="dropzone-browse">clique para selecionar do computador</span></div>
+          <div class="dropzone-formats">
+            <span class="fmt-pill">GeoJSON (.geojson / .json)</span>
+            <span class="fmt-pill">KML (.kml)</span>
+            <span class="fmt-pill">CSV (.csv com lat/long)</span>
+          </div>
+        </div>
+
+        <!-- File Selected Preview & Settings -->
+        <div id="import-config-panel" style="display: none; margin-top: 4px;">
+          <div style="margin-bottom: 12px;">
+            <label style="display:block; font-weight: 700; font-size: 0.8rem; color: var(--forest-dark); margin-bottom: 4px;">Nome da Camada no Mapa:</label>
+            <input type="text" id="import-layer-name" class="pdf-text-input" placeholder="Ex: Dados Complementares de Campo">
+          </div>
+
+          <div style="margin-bottom: 12px;">
+            <label style="display:block; font-weight: 700; font-size: 0.8rem; color: var(--forest-dark); margin-bottom: 4px;">Cor de Destaque no Mapa:</label>
+            <div class="import-color-picker-row" style="display: flex; gap: 8px; align-items: center; margin-top: 4px;">
+              <button type="button" class="color-dot-btn active" data-color="#0284c7" style="background:#0284c7; width:26px; height:26px; border-radius:50%; border:2px solid #fff; box-shadow:0 0 0 2px #0284c7; cursor:pointer;"></button>
+              <button type="button" class="color-dot-btn" data-color="#ec4899" style="background:#ec4899; width:26px; height:26px; border-radius:50%; border:2px solid #fff; box-shadow:0 0 0 1px #cbd5e1; cursor:pointer;"></button>
+              <button type="button" class="color-dot-btn" data-color="#8b5cf6" style="background:#8b5cf6; width:26px; height:26px; border-radius:50%; border:2px solid #fff; box-shadow:0 0 0 1px #cbd5e1; cursor:pointer;"></button>
+              <button type="button" class="color-dot-btn" data-color="#10b981" style="background:#10b981; width:26px; height:26px; border-radius:50%; border:2px solid #fff; box-shadow:0 0 0 1px #cbd5e1; cursor:pointer;"></button>
+              <button type="button" class="color-dot-btn" data-color="#f59e0b" style="background:#f59e0b; width:26px; height:26px; border-radius:50%; border:2px solid #fff; box-shadow:0 0 0 1px #cbd5e1; cursor:pointer;"></button>
+              <button type="button" class="color-dot-btn" data-color="#ef4444" style="background:#ef4444; width:26px; height:26px; border-radius:50%; border:2px solid #fff; box-shadow:0 0 0 1px #cbd5e1; cursor:pointer;"></button>
+              <input type="color" id="import-custom-color" value="#0284c7" title="Escolher cor personalizada" style="width:28px; height:28px; border:none; padding:0; background:none; cursor:pointer; border-radius:50%;">
+            </div>
+          </div>
+
+          <div id="import-file-summary" style="background: rgba(45, 106, 79, 0.06); padding: 10px 12px; border-radius: 8px; border: 1px solid var(--line); font-size: 0.78rem; color: var(--forest-dark);">
+            Arquivo: <strong id="import-summary-filename">—</strong> · <span id="import-summary-count" style="font-weight:700;">—</span>
+          </div>
+        </div>
+
+        <div id="import-status-msg" style="display: none; padding: 8px 12px; border-radius: 8px; font-size: 0.8rem; margin-top: 6px;"></div>
+      </div>
+
+      <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px 20px; border-top: 1.5px solid var(--line); background: var(--cream); border-radius: 0 0 16px 16px;">
+        <button id="import-cancel-btn" class="btn btn-secondary">Cancelar</button>
+        <button id="import-confirm-btn" class="btn btn-primary btn-icon" disabled>
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
+          <span>Visualizar no Mapa</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Embedded Reference Data & App Scripts -->
+  <script src="logos_data.js"></script>
+  <script src="layers_data.js"></script>
+  <script src="initial_records.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
