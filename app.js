@@ -40,6 +40,20 @@
     photos: false
   };
 
+  // Admin Point Edit Mode State & Storage (Georebs Exclusive)
+  const editModeState = {
+    isActive: false,
+    authorizedEmails: ["georebs@gmail.com", "rebeca.moura@ufjf.br"],
+    adjustedCoords: (function () {
+      try {
+        const stored = localStorage.getItem("pcra_adjusted_coords_v1");
+        return stored ? JSON.parse(stored) : {};
+      } catch (e) {
+        return {};
+      }
+    })()
+  };
+
   const els = {
     syncBadge: document.getElementById("sync-status-badge"),
     syncPulse: document.getElementById("sync-pulse"),
@@ -625,19 +639,31 @@
       return isNaN(num) ? 0 : num;
     };
 
-    const lat = parseNum(raw["Latitude"]);
-    const lng = parseNum(raw["Longitude"]);
+    const origLat = parseNum(raw["Latitude"]);
+    const origLng = parseNum(raw["Longitude"]);
+    const recordId = raw["ID"] || ("survey_" + (index + 1));
     const gpsAccuracy = parseNum(raw["Precisão GPS (m)"]);
     const agentRisk = parseIntSafe(raw["Nível de risco percebido pelo agente"]);
     const residentRisk = parseIntSafe(raw["Nível de risco percebido"]);
     const age = parseIntSafe(raw["Idade"]);
     const householdCount = parseIntSafe(raw["Quantidade de pessoas no domicílio"]);
 
+    // Check if Georebs previously adjusted this point's position
+    const adj = editModeState.adjustedCoords[recordId];
+    const lat = (adj && typeof adj.lat === "number") ? adj.lat : origLat;
+    const lng = (adj && typeof adj.lng === "number") ? adj.lng : origLng;
+    const isAdjusted = !!adj;
+    const distAdjusted = adj ? adj.distMeters : 0;
+
     return {
-      ID: raw["ID"] || ("survey_" + (index + 1)),
+      ID: recordId,
       PontoNum: index + 1,
       Latitude: lat,
       Longitude: lng,
+      OrigLatitude: origLat,
+      OrigLongitude: origLng,
+      CoordenadaAjustada: isAdjusted,
+      DistanciaAjustada: distAdjusted,
       PrecisaoGPS: gpsAccuracy,
       DataInspecao: raw["Data da inspeção"] || "",
       DataHoraEnvio: raw["Data/hora do envio"] || "",
@@ -761,19 +787,88 @@
       const riskVal = getActiveRiskValue(rec);
       const color = RISK_COLORS[riskVal] || "#0284c7";
       const isSelected = rec.ID === selectedRecordId;
+      const isEditing = editModeState.isActive;
+      const isAdjusted = !!rec.CoordenadaAjustada;
+
+      let markerPinClass = "risk-marker-pin " + (isSelected ? "selected" : "");
+      if (isEditing) markerPinClass += " draggable-active";
+      if (isAdjusted) markerPinClass += " is-adjusted";
+
+      const pinContent = isAdjusted && !isEditing ? "📍" : riskVal;
 
       const marker = L.marker([rec.Latitude, rec.Longitude], {
         icon: L.divIcon({
-          html: "<div class='risk-marker-pin " + (isSelected ? "selected" : "") + "' style='background:" + color + "; width:24px; height:24px;'>" + riskVal + "</div>",
-          className: "custom-point-marker",
+          html: "<div class='" + markerPinClass + "' style='background:" + color + "; width:24px; height:24px;'>" + pinContent + "</div>",
+          className: "custom-point-marker" + (isEditing ? " draggable-marker" : ""),
           iconSize: [24, 24],
           iconAnchor: [12, 12]
         }),
-        title: "Ponto " + String(rec.PontoNum).padStart(2, '0') + " · " + rec.Nome
+        title: "Ponto " + String(rec.PontoNum).padStart(2, '0') + " · " + rec.Nome + (isEditing ? " (Arraste para ajustar posição)" : ""),
+        draggable: isEditing
       });
 
       marker._riskValue = riskVal;
       marker._recordId = rec.ID;
+
+      if (isEditing) {
+        marker.on("dragstart", function () {
+          marker.closePopup();
+        });
+
+        marker.on("dragend", function () {
+          const newPos = marker.getLatLng();
+          const origLat = (typeof rec.OrigLatitude === "number") ? rec.OrigLatitude : rec.Latitude;
+          const origLng = (typeof rec.OrigLongitude === "number") ? rec.OrigLongitude : rec.Longitude;
+          const distMoved = Math.round(L.latLng(origLat, origLng).distanceTo(newPos) * 10) / 10;
+
+          rec.OrigLatitude = origLat;
+          rec.OrigLongitude = origLng;
+          rec.Latitude = newPos.lat;
+          rec.Longitude = newPos.lng;
+          rec.CoordenadaAjustada = true;
+          rec.DistanciaAjustada = distMoved;
+
+          editModeState.adjustedCoords[rec.ID] = {
+            id: rec.ID,
+            pontoNum: rec.PontoNum,
+            nome: rec.Nome,
+            endereco: rec.Endereco,
+            responsavel: rec.Responsavel,
+            lat: newPos.lat,
+            lng: newPos.lng,
+            origLat: origLat,
+            origLng: origLng,
+            distMeters: distMoved,
+            timestamp: new Date().toISOString()
+          };
+
+          try {
+            localStorage.setItem("pcra_adjusted_coords_v1", JSON.stringify(editModeState.adjustedCoords));
+          } catch (e) {}
+
+          updateAdjustedUI();
+          renderPointsList();
+          if (selectedRecordId === rec.ID) {
+            renderDetailsTab(rec);
+          }
+
+          L.popup({ offset: [0, -10], className: "edit-confirm-popup", closeButton: true })
+            .setLatLng(newPos)
+            .setContent(
+              "<div class='popup-custom-card' style='padding:4px;'>" +
+                "<div style='font-size:0.80rem;font-weight:700;color:#b45309;margin-bottom:4px;'>📍 Ponto " + String(rec.PontoNum).padStart(2, '0') + " Reposicionado!</div>" +
+                "<div style='font-size:0.75rem;line-height:1.4;margin-bottom:6px;'>" +
+                  "<strong>Nova Coordenada:</strong> " + newPos.lat.toFixed(6) + ", " + newPos.lng.toFixed(6) + "<br>" +
+                  "<strong>Deslocamento:</strong> <span style='color:#dc2626;font-weight:700;'>" + distMoved + " m</span> do GPS de campo" +
+                "</div>" +
+                "<div style='display:flex;gap:4px;'>" +
+                  "<button class='btn btn-primary' style='padding:3px 8px;font-size:0.72rem;flex:1;' onclick='map.closePopup()'>✓ Confirmado</button>" +
+                  "<button class='btn btn-secondary' style='padding:3px 8px;font-size:0.72rem;' onclick='window.revertPointPosition(\"" + rec.ID + "\")'>↺ Reverter</button>" +
+                "</div>" +
+              "</div>"
+            ).openOn(map);
+        });
+      }
 
       const thumb = rec.Photos.length > 0
         ? ("<div style='margin-top:6px;border-radius:6px;overflow:hidden;height:110px;background:#1e293b;position:relative;'><img src='" + rec.Photos[0].thumbUrl + "' style='width:100%;height:100%;object-fit:cover;' loading='lazy' referrerpolicy='no-referrer' onerror='this.onerror=null; this.src=\"https://drive.google.com/thumbnail?id=" + rec.Photos[0].id + "&sz=w600\";'><div style='position:absolute;bottom:4px;right:6px;background:rgba(0,0,0,0.65);color:#fff;font-size:10px;padding:2px 6px;border-radius:4px;font-weight:600;'>📸 " + rec.Photos.length + " foto(s)</div></div>")
@@ -787,6 +882,7 @@
           "</div>" +
           "<div class='popup-custom-header'>" + rec.Nome + "</div>" +
           "<div class='popup-custom-addr'>" + rec.Endereco + "</div>" +
+          (isAdjusted ? ("<div style='margin:4px 0;'><span class='point-adjusted-tag'>📌 Coordenada Ajustada (+ " + rec.DistanciaAjustada + "m)</span></div>") : "") +
           "<div style='font-size:0.75rem;color:var(--text-muted);'>" +
             "Vistoriado por: <strong>" + rec.Responsavel + "</strong><br>" +
             "Data: " + formatDatePt(rec.DataInspecao) +
@@ -845,6 +941,7 @@
       const color = RISK_COLORS[riskVal] || "#0284c7";
       const isActive = rec.ID === selectedRecordId;
       const tags = [];
+      if (rec.CoordenadaAjustada) tags.push("<span class='point-mini-tag' style='background:#fef3c7;color:#92400e;border:1px solid #fcd34d;'>📌 Ajustado</span>");
       if (rec.Mobilidade === "Sim") tags.push("<span class='point-mini-tag'>♿ Mobilidade</span>");
       if (rec.Medicacao === "Sim") tags.push("<span class='point-mini-tag'>💊 Medicação</span>");
       if (rec.LaudoDefesaCivil === "Sim") tags.push("<span class='point-mini-tag'>📋 Laudo</span>");
@@ -913,6 +1010,18 @@
     }
     if (!attachmentsHtml) attachmentsHtml = "<p style='font-size:0.78rem;color:var(--text-muted);'>Nenhum documento anexado.</p>";
 
+    let adjustedCoordHtml = "";
+    if (rec.CoordenadaAjustada) {
+      adjustedCoordHtml = 
+        "<div class='detail-item' style='grid-column: 1 / -1; background: rgba(245, 158, 11, 0.08); padding: 8px 10px; border-radius: 6px; border: 1px dashed #f59e0b;'>" +
+          "<dt style='color:#b45309; font-weight:700;'>Calibração Espacial</dt>" +
+          "<dd style='display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:6px;'>" +
+            "<span class='point-adjusted-tag'>📌 Posição Ajustada por Georebs (+ " + rec.DistanciaAjustada + "m do GPS original)</span>" +
+            "<button class='btn btn-secondary' style='padding:2px 8px; font-size:0.70rem;' onclick='window.revertPointPosition(\"" + rec.ID + "\")'>↺ Restaurar Coordenada Original</button>" +
+          "</dd>" +
+        "</div>";
+    }
+
     els.detailContainer.innerHTML = 
       "<div class='detail-header-card'>" +
         "<div class='detail-ponto-number'>Levantamento de Risco · Ponto " + String(rec.PontoNum).padStart(2, '0') + "</div>" +
@@ -939,6 +1048,7 @@
           "Identificação da Inspeção" +
         "</div>" +
         "<dl class='detail-grid-dl'>" +
+          adjustedCoordHtml +
           "<div class='detail-item'><dt>Responsável Técnico</dt><dd>" + rec.Responsavel + "</dd></div>" +
           "<div class='detail-item'><dt>Data da Inspeção</dt><dd>" + formatDatePt(rec.DataInspecao) + (rec.DataHoraEnvio ? (" · " + rec.DataHoraEnvio.split('T')[1].slice(0, 5)) : "") + "</dd></div>" +
           "<div class='detail-item'><dt>Precisão do GPS</dt><dd>" + (rec.PrecisaoGPS ? (rec.PrecisaoGPS + " metros") : "Não registrada") + "</dd></div>" +
@@ -2743,6 +2853,338 @@
     }
   }
 
+  // =========================================================================
+  // Admin Point Edit Mode State & Management (Georebs Exclusive)
+  // =========================================================================
+  function isUserAuthorized(email) {
+    if (!email) return false;
+    const clean = String(email).trim().toLowerCase();
+    return editModeState.authorizedEmails.some(function (auth) {
+      return auth.toLowerCase() === clean;
+    });
+  }
+
+  function toggleEditMode(enable) {
+    editModeState.isActive = enable;
+    const btn = document.getElementById("admin-edit-points-btn");
+    const banner = document.getElementById("admin-edit-mode-banner");
+    const label = document.getElementById("admin-edit-points-btn-label");
+
+    if (enable) {
+      if (btn) btn.classList.add("active");
+      if (label) label.textContent = "Edição Ativa";
+      if (banner) banner.style.display = "flex";
+      // Temporarily disable clustering so all individual markers are directly accessible & draggable
+      isClusteringEnabled = false;
+      const chk = document.getElementById("toggle-clustering-chk");
+      if (chk) chk.checked = false;
+    } else {
+      if (btn) btn.classList.remove("active");
+      if (label) label.textContent = "Ajustar Pontos";
+      if (banner) banner.style.display = "none";
+    }
+
+    updateAdjustedUI();
+    renderMapMarkers();
+    renderPointsList();
+  }
+
+  function updateAdjustedUI() {
+    const count = Object.keys(editModeState.adjustedCoords).length;
+    const badge = document.getElementById("admin-adjusted-count-badge");
+    if (badge) {
+      badge.textContent = count + (count === 1 ? " ponto ajustado" : " pontos ajustados");
+    }
+  }
+
+  window.revertPointPosition = function (recordId) {
+    const rec = allRecords.find(function (r) { return r.ID === recordId; });
+    if (!rec) return;
+    if (typeof rec.OrigLatitude === "number" && typeof rec.OrigLongitude === "number") {
+      rec.Latitude = rec.OrigLatitude;
+      rec.Longitude = rec.OrigLongitude;
+    }
+    rec.CoordenadaAjustada = false;
+    rec.DistanciaAjustada = 0;
+    delete editModeState.adjustedCoords[recordId];
+    try {
+      localStorage.setItem("pcra_adjusted_coords_v1", JSON.stringify(editModeState.adjustedCoords));
+    } catch (e) {}
+
+    updateAdjustedUI();
+    renderMapMarkers();
+    renderPointsList();
+    if (selectedRecordId === recordId) {
+      renderDetailsTab(rec);
+    }
+    if (map) map.closePopup();
+  };
+
+  function resetAllAdjustedPoints() {
+    const count = Object.keys(editModeState.adjustedCoords).length;
+    if (count === 0) {
+      alert("Nenhum ponto foi ajustado até o momento.");
+      return;
+    }
+    if (confirm("Tem certeza que deseja restaurar as coordenadas GPS originais de TODOS os " + count + " pontos ajustados?")) {
+      allRecords.forEach(function (rec) {
+        if (rec.CoordenadaAjustada) {
+          if (typeof rec.OrigLatitude === "number" && typeof rec.OrigLongitude === "number") {
+            rec.Latitude = rec.OrigLatitude;
+            rec.Longitude = rec.OrigLongitude;
+          }
+          rec.CoordenadaAjustada = false;
+          rec.DistanciaAjustada = 0;
+        }
+      });
+      editModeState.adjustedCoords = {};
+      try {
+        localStorage.removeItem("pcra_adjusted_coords_v1");
+      } catch (e) {}
+      updateAdjustedUI();
+      renderMapMarkers();
+      renderPointsList();
+      if (selectedRecordId) {
+        const sel = allRecords.find(function (r) { return r.ID === selectedRecordId; });
+        if (sel) renderDetailsTab(sel);
+      }
+      alert("Todas as coordenadas foram restauradas para os valores originais do levantamento de campo.");
+    }
+  }
+
+  function openAdjustedSummaryModal() {
+    const modal = document.getElementById("admin-adjusted-summary-modal");
+    const wrapper = document.getElementById("admin-adjusted-points-table-wrapper");
+    if (!modal || !wrapper) return;
+
+    const adjustedIds = Object.keys(editModeState.adjustedCoords);
+    if (adjustedIds.length === 0) {
+      wrapper.innerHTML = "<div style='padding:24px;text-align:center;color:var(--text-muted);font-size:0.85rem;'>Nenhum ponto de campo foi ajustado ainda.<br>No Modo Edição, clique e arraste qualquer marcador no mapa para calibrar sua localização.</div>";
+    } else {
+      let tableHtml = "<table class='adjusted-table'>" +
+        "<thead><tr>" +
+          "<th>Ponto</th>" +
+          "<th>Morador</th>" +
+          "<th>Endereço</th>" +
+          "<th>Coord. Ajustada</th>" +
+          "<th>Coord. Original</th>" +
+          "<th>Deslocamento</th>" +
+          "<th>Ação</th>" +
+        "</tr></thead><tbody>";
+
+      adjustedIds.forEach(function (id) {
+        const item = editModeState.adjustedCoords[id];
+        tableHtml += "<tr>" +
+          "<td><strong style='color:var(--primary);'>#" + String(item.pontoNum).padStart(2, '0') + "</strong></td>" +
+          "<td>" + (item.nome || "—") + "</td>" +
+          "<td style='font-size:0.72rem;'>" + (item.endereco || "—") + "</td>" +
+          "<td style='font-family:monospace;font-size:0.72rem;'>" + item.lat.toFixed(6) + ", " + item.lng.toFixed(6) + "</td>" +
+          "<td style='font-family:monospace;font-size:0.70rem;color:var(--text-muted);'>" + (typeof item.origLat === "number" ? item.origLat.toFixed(6) + ", " + item.origLng.toFixed(6) : "—") + "</td>" +
+          "<td><span style='font-weight:700;color:#b45309;'>" + item.distMeters + " m</span></td>" +
+          "<td><button class='btn btn-secondary' style='padding:2px 6px;font-size:0.68rem;' onclick='window.revertPointPosition(\"" + id + "\")'>↺ Reverter</button></td>" +
+        "</tr>";
+      });
+
+      tableHtml += "</tbody></table>";
+      wrapper.innerHTML = tableHtml;
+    }
+
+    modal.classList.add("open");
+  }
+
+  function exportAdjustedGeoJSON() {
+    const adjustedIds = Object.keys(editModeState.adjustedCoords);
+    if (adjustedIds.length === 0) {
+      alert("Nenhum ponto ajustado para exportar.");
+      return;
+    }
+    const features = adjustedIds.map(function (id) {
+      const item = editModeState.adjustedCoords[id];
+      const rec = allRecords.find(function (r) { return r.ID === id; });
+      const props = rec ? Object.assign({}, rec.Raw || {}) : {};
+      props.latitude_ajustada = item.lat;
+      props.longitude_ajustada = item.lng;
+      props.latitude_original = item.origLat;
+      props.longitude_original = item.origLng;
+      props.deslocamento_metros = item.distMeters;
+      props.data_ajuste_georebs = item.timestamp;
+      props.ajustado_por = "Georebs@gmail.com";
+
+      return {
+        type: "Feature",
+        properties: props,
+        geometry: {
+          type: "Point",
+          coordinates: [item.lng, item.lat]
+        }
+      };
+    });
+
+    const geojson = {
+      type: "FeatureCollection",
+      name: "PCRA_Pontos_Campo_Ajustados_Georebs",
+      crs: { type: "name", properties: { name: "urn:ogc:def:crs:OGC:1.3:CRS84" } },
+      features: features
+    };
+
+    const blob = new Blob([JSON.stringify(geojson, null, 2)], { type: "application/geo+json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "PCRA_Pontos_Ajustados_Georebs_" + new Date().toISOString().slice(0, 10) + ".geojson";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }
+
+  function exportAdjustedCSV() {
+    const adjustedIds = Object.keys(editModeState.adjustedCoords);
+    if (adjustedIds.length === 0) {
+      alert("Nenhum ponto ajustado para exportar.");
+      return;
+    }
+    const rows = [
+      ["ID", "Ponto", "Nome", "Endereco", "Responsavel", "Nova_Latitude", "Nova_Longitude", "Latitude_Original", "Longitude_Original", "Deslocamento_Metros", "Data_Ajuste"]
+    ];
+
+    adjustedIds.forEach(function (id) {
+      const item = editModeState.adjustedCoords[id];
+      rows.push([
+        id,
+        item.pontoNum,
+        '"' + (item.nome || "").replace(/"/g, '""') + '"',
+        '"' + (item.endereco || "").replace(/"/g, '""') + '"',
+        '"' + (item.responsavel || "").replace(/"/g, '""') + '"',
+        item.lat.toFixed(6),
+        item.lng.toFixed(6),
+        item.origLat ? item.origLat.toFixed(6) : "",
+        item.origLng ? item.origLng.toFixed(6) : "",
+        item.distMeters,
+        item.timestamp
+      ]);
+    });
+
+    const csvContent = "\uFEFF" + rows.map(function (r) { return r.join(";"); }).join("\r\n");
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "PCRA_Tabela_Pontos_Ajustados_Georebs_" + new Date().toISOString().slice(0, 10) + ".csv";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }
+
+  function copyAdjustedCoordinatesTable() {
+    const adjustedIds = Object.keys(editModeState.adjustedCoords);
+    if (adjustedIds.length === 0) {
+      alert("Nenhum ponto ajustado para copiar.");
+      return;
+    }
+    let text = "ID\tPonto\tNome\tEndereço\tNova_Latitude\tNova_Longitude\tDeslocamento_m\n";
+    adjustedIds.forEach(function (id) {
+      const item = editModeState.adjustedCoords[id];
+      text += id + "\t" + item.pontoNum + "\t" + item.nome + "\t" + item.endereco + "\t" + item.lat.toFixed(6) + "\t" + item.lng.toFixed(6) + "\t" + item.distMeters + "m\n";
+    });
+
+    navigator.clipboard.writeText(text).then(function () {
+      const btnSpan = document.getElementById("admin-copy-coords-btn-text");
+      if (btnSpan) {
+        const orig = btnSpan.textContent;
+        btnSpan.textContent = "✓ Copiado!";
+        setTimeout(function () { btnSpan.textContent = orig; }, 2000);
+      }
+    }).catch(function () {
+      alert("Erro ao copiar para a área de transferência.");
+    });
+  }
+
+  function setupAdminEditMode() {
+    const btnToggle = document.getElementById("admin-edit-points-btn");
+    const modalAuth = document.getElementById("admin-auth-modal");
+    const btnAuthClose = document.getElementById("admin-auth-close-btn");
+    const btnAuthSubmit = document.getElementById("admin-auth-submit-btn");
+    const inputAuthEmail = document.getElementById("admin-auth-email-input");
+    const msgAuthError = document.getElementById("admin-auth-error");
+
+    const bannerExportBtn = document.getElementById("admin-export-adjusted-btn");
+    const bannerResetAllBtn = document.getElementById("admin-reset-all-adjusted-btn");
+    const bannerExitBtn = document.getElementById("admin-exit-edit-btn");
+
+    const modalSummary = document.getElementById("admin-adjusted-summary-modal");
+    const btnSummaryClose = document.getElementById("admin-summary-close-btn");
+    const btnDownloadGeojson = document.getElementById("admin-download-adjusted-geojson-btn");
+    const btnDownloadCsv = document.getElementById("admin-download-adjusted-csv-btn");
+    const btnCopyCoords = document.getElementById("admin-copy-coords-btn");
+
+    if (btnToggle) {
+      btnToggle.addEventListener("click", function () {
+        if (editModeState.isActive) {
+          toggleEditMode(false);
+          return;
+        }
+        // Check session auth
+        if (sessionStorage.getItem("pcra_auth_georebs") === "true") {
+          toggleEditMode(true);
+        } else {
+          if (modalAuth) {
+            if (msgAuthError) msgAuthError.style.display = "none";
+            if (inputAuthEmail) inputAuthEmail.value = "";
+            modalAuth.classList.add("open");
+            setTimeout(function () { if (inputAuthEmail) inputAuthEmail.focus(); }, 150);
+          }
+        }
+      });
+    }
+
+    if (btnAuthClose && modalAuth) {
+      btnAuthClose.addEventListener("click", function () { modalAuth.classList.remove("open"); });
+      modalAuth.addEventListener("click", function (e) {
+        if (e.target === modalAuth) modalAuth.classList.remove("open");
+      });
+    }
+
+    function handleAuthSubmit() {
+      if (!inputAuthEmail) return;
+      const email = inputAuthEmail.value.trim();
+      if (isUserAuthorized(email)) {
+        sessionStorage.setItem("pcra_auth_georebs", "true");
+        sessionStorage.setItem("pcra_auth_email", email);
+        if (modalAuth) modalAuth.classList.remove("open");
+        toggleEditMode(true);
+      } else {
+        if (msgAuthError) {
+          msgAuthError.style.display = "block";
+          msgAuthError.textContent = "Acesso negado. Apenas o e-mail Georebs@gmail.com possui autorização para edição.";
+        }
+      }
+    }
+
+    if (btnAuthSubmit) btnAuthSubmit.addEventListener("click", handleAuthSubmit);
+    if (inputAuthEmail) {
+      inputAuthEmail.addEventListener("keydown", function (e) {
+        if (e.key === "Enter") handleAuthSubmit();
+      });
+    }
+
+    if (bannerExportBtn) bannerExportBtn.addEventListener("click", openAdjustedSummaryModal);
+    if (bannerResetAllBtn) bannerResetAllBtn.addEventListener("click", resetAllAdjustedPoints);
+    if (bannerExitBtn) bannerExitBtn.addEventListener("click", function () { toggleEditMode(false); });
+
+    if (btnSummaryClose && modalSummary) {
+      btnSummaryClose.addEventListener("click", function () { modalSummary.classList.remove("open"); });
+      modalSummary.addEventListener("click", function (e) {
+        if (e.target === modalSummary) modalSummary.classList.remove("open");
+      });
+    }
+
+    if (btnDownloadGeojson) btnDownloadGeojson.addEventListener("click", exportAdjustedGeoJSON);
+    if (btnDownloadCsv) btnDownloadCsv.addEventListener("click", exportAdjustedCSV);
+    if (btnCopyCoords) btnCopyCoords.addEventListener("click", copyAdjustedCoordinatesTable);
+  }
+
   // -------------------------------------------------------------
   // WebGIS Measurement & Annotation Helpers
   // -------------------------------------------------------------
@@ -3551,6 +3993,8 @@
       initReferenceLayers();
       setupEventListeners();
       setupWebGISTools();
+      setupAdminEditMode();
+      updateAdjustedUI();
       switchTab("list");
       fallbackToInitialRecords();
       setTimeout(function () { map.invalidateSize(); }, 150);

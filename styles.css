@@ -3082,4 +3082,228 @@ html, body {
   color: #4ade80;
 }
 
+/* ==========================================================================
+   Admin Edit Mode Styles (Georebs Field Points Calibration)
+   ========================================================================== */
+.btn-admin-toggle {
+  background: #f59e0b;
+  color: #1a1a1a;
+  font-weight: 700;
+  border: 1.5px solid #d97706;
+  box-shadow: 0 2px 5px rgba(245, 158, 11, 0.25);
+  transition: all 0.2s ease;
+}
+
+.btn-admin-toggle:hover {
+  background: #d97706;
+  color: #ffffff;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 10px rgba(217, 119, 6, 0.35);
+}
+
+.btn-admin-toggle.active {
+  background: #dc2626 !important;
+  color: #ffffff !important;
+  border-color: #b91c1c !important;
+  box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.35), 0 4px 12px rgba(220, 38, 38, 0.4) !important;
+  animation: adminPulseBtn 2s infinite ease-in-out;
+}
+
+@keyframes adminPulseBtn {
+  0%, 100% { box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.35); }
+  50% { box-shadow: 0 0 0 6px rgba(220, 38, 38, 0.15); }
+}
+
+.admin-edit-banner {
+  position: absolute;
+  top: 14px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1100;
+  background: rgba(18, 30, 20, 0.94);
+  color: #ffffff;
+  backdrop-filter: blur(10px);
+  border: 2px solid #f59e0b;
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+  padding: 8px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  max-width: 90%;
+  animation: slideDownBanner 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes slideDownBanner {
+  from { opacity: 0; transform: translate(-50%, -15px); }
+  to { opacity: 1; transform: translate(-50%, 0); }
+}
+
+.admin-edit-banner-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.admin-edit-pulse {
+  width: 12px;
+  height: 12px;
+  background: #ef4444;
+  border-radius: 50%;
+  display: inline-block;
+  box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7);
+  animation: adminPulseDot 1.6s infinite;
+  flex-shrink: 0;
+}
+
+@keyframes adminPulseDot {
+  0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
+  70% { transform: scale(1); box-shadow: 0 0 0 8px rgba(239, 68, 68, 0); }
+  100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+}
+
+.admin-edit-title {
+  font-family: var(--font-display);
+  font-size: 0.84rem;
+  color: #fbbf24;
+  letter-spacing: 0.02em;
+}
+
+.admin-edit-subtext {
+  font-size: 0.70rem;
+  color: #d1d5db;
+}
+
+.admin-edit-banner-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.admin-adjusted-badge {
+  background: rgba(245, 158, 11, 0.2);
+  color: #fbbf24;
+  border: 1px solid rgba(245, 158, 11, 0.4);
+  font-size: 0.70rem;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 99px;
+}
+
+.btn-admin-action {
+  border: none;
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 5px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.btn-admin-save {
+  background: #075c2a;
+  color: #ffffff;
+}
+
+.btn-admin-save:hover {
+  background: #05451f;
+  transform: translateY(-1px);
+}
+
+.btn-admin-reset {
+  background: #475569;
+  color: #ffffff;
+}
+
+.btn-admin-reset:hover {
+  background: #334155;
+}
+
+.btn-admin-exit {
+  background: #dc2626;
+  color: #ffffff;
+}
+
+.btn-admin-exit:hover {
+  background: #b91c1c;
+}
+
+/* Draggable Marker Pin Styles in Edit Mode */
+.custom-point-marker.draggable-marker {
+  cursor: grab !important;
+}
+
+.custom-point-marker.draggable-marker:active {
+  cursor: grabbing !important;
+}
+
+.risk-marker-pin.draggable-active {
+  box-shadow: 0 0 0 3px #fbbf24, 0 4px 12px rgba(0,0,0,0.5) !important;
+  transform: scale(1.18);
+  border-color: #fbbf24 !important;
+  animation: pinPulseEdit 1.8s infinite alternate;
+}
+
+@keyframes pinPulseEdit {
+  0% { box-shadow: 0 0 0 3px #fbbf24, 0 4px 10px rgba(0,0,0,0.4); }
+  100% { box-shadow: 0 0 0 6px rgba(251, 191, 36, 0.5), 0 6px 16px rgba(0,0,0,0.6); }
+}
+
+.risk-marker-pin.is-adjusted {
+  border: 2px dashed #fbbf24 !important;
+}
+
+.point-adjusted-tag {
+  background: #fef3c7;
+  color: #92400e;
+  border: 1px solid #fcd34d;
+  font-size: 0.65rem;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 4px;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+}
+
+[data-theme="dark"] .point-adjusted-tag {
+  background: #78350f;
+  color: #fef3c7;
+  border-color: #b45309;
+}
+
+/* Adjusted Table in Summary Modal */
+.adjusted-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.78rem;
+  text-align: left;
+}
+
+.adjusted-table th {
+  background: var(--forest);
+  color: #ffffff;
+  padding: 8px 10px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  position: sticky;
+  top: 0;
+  z-index: 2;
+}
+
+.adjusted-table td {
+  padding: 7px 10px;
+  border-bottom: 1px solid var(--line);
+  color: var(--text-color);
+}
+
+.adjusted-table tr:hover {
+  background: rgba(7, 92, 42, 0.05);
+}
+
 
