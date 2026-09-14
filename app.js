@@ -40,17 +40,19 @@
     photos: false
   };
 
-  // Admin Point Edit Mode State & Storage (Georebs Exclusive)
+  // Admin Point Edit Mode State & Storage (Admin / Georebs)
   const editModeState = {
     isActive: false,
-    authorizedEmails: ["georebs@gmail.com", "rebeca.moura@ufjf.br"],
+    authorizedUsers: ["admin", "georebs", "georebs@gmail.com", "rebeca.moura@ufjf.br"],
+    adminPassword: "951951",
     adjustedCoords: (function () {
+      let localObj = {};
       try {
         const stored = localStorage.getItem("pcra_adjusted_coords_v1");
-        return stored ? JSON.parse(stored) : {};
-      } catch (e) {
-        return {};
-      }
+        if (stored) localObj = JSON.parse(stored);
+      } catch (e) {}
+      const globalObj = window.PCRA_GLOBAL_ADJUSTMENTS || {};
+      return Object.assign({}, globalObj, localObj);
     })()
   };
 
@@ -792,9 +794,8 @@
 
       let markerPinClass = "risk-marker-pin " + (isSelected ? "selected" : "");
       if (isEditing) markerPinClass += " draggable-active";
-      if (isAdjusted) markerPinClass += " is-adjusted";
 
-      const pinContent = isAdjusted && !isEditing ? "📍" : riskVal;
+      const pinContent = riskVal;
 
       const marker = L.marker([rec.Latitude, rec.Longitude], {
         icon: L.divIcon({
@@ -856,14 +857,14 @@
             .setLatLng(newPos)
             .setContent(
               "<div class='popup-custom-card' style='padding:4px;'>" +
-                "<div style='font-size:0.80rem;font-weight:700;color:#b45309;margin-bottom:4px;'>📍 Ponto " + String(rec.PontoNum).padStart(2, '0') + " Reposicionado!</div>" +
+                "<div style='font-size:0.80rem;font-weight:700;color:#075c2a;margin-bottom:4px;'>📍 Ponto " + String(rec.PontoNum).padStart(2, '0') + " Reposicionado</div>" +
                 "<div style='font-size:0.75rem;line-height:1.4;margin-bottom:6px;'>" +
                   "<strong>Nova Coordenada:</strong> " + newPos.lat.toFixed(6) + ", " + newPos.lng.toFixed(6) + "<br>" +
-                  "<strong>Deslocamento:</strong> <span style='color:#dc2626;font-weight:700;'>" + distMoved + " m</span> do GPS de campo" +
+                  "<strong>Deslocamento:</strong> <span style='color:#dc2626;font-weight:700;'>" + distMoved + " m</span> do GPS original" +
                 "</div>" +
-                "<div style='display:flex;gap:4px;'>" +
-                  "<button class='btn btn-primary' style='padding:3px 8px;font-size:0.72rem;flex:1;' onclick='map.closePopup()'>✓ Confirmado</button>" +
-                  "<button class='btn btn-secondary' style='padding:3px 8px;font-size:0.72rem;' onclick='window.revertPointPosition(\"" + rec.ID + "\")'>↺ Reverter</button>" +
+                "<div style='display:flex;gap:6px;'>" +
+                  "<button class='btn btn-primary' style='padding:4px 10px;font-size:0.72rem;flex:1;' onclick='window.confirmPointPosition(\"" + rec.ID + "\")'>✓ Confirmado</button>" +
+                  "<button class='btn btn-secondary' style='padding:4px 8px;font-size:0.72rem;' onclick='window.revertPointPosition(\"" + rec.ID + "\")'>↺ Reverter</button>" +
                 "</div>" +
               "</div>"
             ).openOn(map);
@@ -2854,15 +2855,34 @@
   }
 
   // =========================================================================
-  // Admin Point Edit Mode State & Management (Georebs Exclusive)
+  // Admin Point Edit Mode State & Management (Admin / Georebs)
   // =========================================================================
-  function isUserAuthorized(email) {
-    if (!email) return false;
-    const clean = String(email).trim().toLowerCase();
-    return editModeState.authorizedEmails.some(function (auth) {
-      return auth.toLowerCase() === clean;
+  function isUserAuthorized(user, pass) {
+    if (!user || !pass) return false;
+    const cleanUser = String(user).trim().toLowerCase();
+    const cleanPass = String(pass).trim();
+    const userOk = editModeState.authorizedUsers.some(function (u) {
+      return u.toLowerCase() === cleanUser;
     });
+    const passOk = (cleanPass === editModeState.adminPassword);
+    return userOk && passOk;
   }
+
+  window.confirmPointPosition = function (recordId) {
+    if (map) map.closePopup();
+    const rec = allRecords.find(function (r) { return r.ID === recordId; });
+    if (rec) {
+      const toast = document.createElement("div");
+      toast.className = "admin-toast-notify";
+      toast.style.cssText = "position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#075c2a;color:#ffffff;padding:8px 16px;border-radius:8px;font-size:0.80rem;font-weight:700;box-shadow:0 4px 12px rgba(0,0,0,0.3);z-index:9999;transition:opacity 0.3s ease;";
+      toast.textContent = "✓ Ponto " + String(rec.PontoNum).padStart(2, '0') + " (" + rec.Nome + ") calibrado com sucesso!";
+      document.body.appendChild(toast);
+      setTimeout(function () {
+        toast.style.opacity = "0";
+        setTimeout(function () { if (toast.parentNode) toast.parentNode.removeChild(toast); }, 300);
+      }, 2500);
+    }
+  };
 
   function toggleEditMode(enable) {
     editModeState.isActive = enable;
@@ -3007,8 +3027,8 @@
       props.latitude_original = item.origLat;
       props.longitude_original = item.origLng;
       props.deslocamento_metros = item.distMeters;
-      props.data_ajuste_georebs = item.timestamp;
-      props.ajustado_por = "Georebs@gmail.com";
+      props.data_ajuste_admin = item.timestamp;
+      props.ajustado_por = "Administrador PCRA";
 
       return {
         type: "Feature",
@@ -3022,7 +3042,7 @@
 
     const geojson = {
       type: "FeatureCollection",
-      name: "PCRA_Pontos_Campo_Ajustados_Georebs",
+      name: "PCRA_Pontos_Campo_Ajustados",
       crs: { type: "name", properties: { name: "urn:ogc:def:crs:OGC:1.3:CRS84" } },
       features: features
     };
@@ -3031,7 +3051,7 @@
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = "PCRA_Pontos_Ajustados_Georebs_" + new Date().toISOString().slice(0, 10) + ".geojson";
+    a.download = "PCRA_Pontos_Ajustados_" + new Date().toISOString().slice(0, 10) + ".geojson";
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -3070,7 +3090,25 @@
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = "PCRA_Tabela_Pontos_Ajustados_Georebs_" + new Date().toISOString().slice(0, 10) + ".csv";
+    a.download = "PCRA_Tabela_Pontos_Ajustados_" + new Date().toISOString().slice(0, 10) + ".csv";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }
+
+  function exportAdjustedJS() {
+    const adjustedIds = Object.keys(editModeState.adjustedCoords);
+    if (adjustedIds.length === 0) {
+      alert("Nenhum ponto ajustado para exportar.");
+      return;
+    }
+    const jsContent = "/**\n * PCRA - Coordenadas Globais Calibradas\n * Sincronizacao entre multiplos dispositivos e navegadores.\n * Atualizado em: " + new Date().toISOString() + "\n */\nwindow.PCRA_GLOBAL_ADJUSTMENTS = " + JSON.stringify(editModeState.adjustedCoords, null, 2) + ";\n";
+    const blob = new Blob([jsContent], { type: "application/javascript;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "adjusted_coords_data.js";
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -3106,7 +3144,8 @@
     const modalAuth = document.getElementById("admin-auth-modal");
     const btnAuthClose = document.getElementById("admin-auth-close-btn");
     const btnAuthSubmit = document.getElementById("admin-auth-submit-btn");
-    const inputAuthEmail = document.getElementById("admin-auth-email-input");
+    const inputAuthUser = document.getElementById("admin-auth-user-input");
+    const inputAuthPass = document.getElementById("admin-auth-pass-input");
     const msgAuthError = document.getElementById("admin-auth-error");
 
     const bannerExportBtn = document.getElementById("admin-export-adjusted-btn");
@@ -3117,6 +3156,7 @@
     const btnSummaryClose = document.getElementById("admin-summary-close-btn");
     const btnDownloadGeojson = document.getElementById("admin-download-adjusted-geojson-btn");
     const btnDownloadCsv = document.getElementById("admin-download-adjusted-csv-btn");
+    const btnDownloadJs = document.getElementById("admin-download-adjusted-js-btn");
     const btnCopyCoords = document.getElementById("admin-copy-coords-btn");
 
     function openAuthModal() {
@@ -3125,9 +3165,11 @@
           msgAuthError.style.display = "none";
           msgAuthError.textContent = "";
         }
-        if (inputAuthEmail) inputAuthEmail.value = "";
+        if (inputAuthPass) inputAuthPass.value = "";
         modalAuth.classList.add("open");
-        setTimeout(function () { if (inputAuthEmail) inputAuthEmail.focus(); }, 150);
+        setTimeout(function () {
+          if (inputAuthPass) inputAuthPass.focus();
+        }, 150);
       }
     }
 
@@ -3141,7 +3183,7 @@
         return;
       }
       // Check session auth
-      if (sessionStorage.getItem("pcra_auth_georebs") === "true") {
+      if (sessionStorage.getItem("pcra_auth_admin") === "true") {
         toggleEditMode(true);
       } else {
         openAuthModal();
@@ -3184,24 +3226,31 @@
       if (e) {
         e.preventDefault();
       }
-      if (!inputAuthEmail) return;
-      const email = inputAuthEmail.value.trim();
-      if (isUserAuthorized(email)) {
-        sessionStorage.setItem("pcra_auth_georebs", "true");
-        sessionStorage.setItem("pcra_auth_email", email);
+      const user = inputAuthUser ? inputAuthUser.value.trim() : "";
+      const pass = inputAuthPass ? inputAuthPass.value.trim() : "";
+      if (isUserAuthorized(user, pass)) {
+        sessionStorage.setItem("pcra_auth_admin", "true");
+        sessionStorage.setItem("pcra_auth_user", user);
         if (modalAuth) modalAuth.classList.remove("open");
         toggleEditMode(true);
       } else {
         if (msgAuthError) {
           msgAuthError.style.display = "block";
-          msgAuthError.textContent = "Acesso negado. Apenas o e-mail Georebs@gmail.com possui autorização para edição.";
+          msgAuthError.textContent = "Credenciais incorretas. Usuário: admin / Senha: 951951";
         }
       }
     }
 
     if (btnAuthSubmit) btnAuthSubmit.addEventListener("click", handleAuthSubmit);
-    if (inputAuthEmail) {
-      inputAuthEmail.addEventListener("keydown", function (e) {
+    if (inputAuthUser) {
+      inputAuthUser.addEventListener("keydown", function (e) {
+        if (e.key === "Enter") {
+          if (inputAuthPass) inputAuthPass.focus();
+        }
+      });
+    }
+    if (inputAuthPass) {
+      inputAuthPass.addEventListener("keydown", function (e) {
         if (e.key === "Enter") handleAuthSubmit(e);
       });
     }
@@ -3219,6 +3268,7 @@
 
     if (btnDownloadGeojson) btnDownloadGeojson.addEventListener("click", exportAdjustedGeoJSON);
     if (btnDownloadCsv) btnDownloadCsv.addEventListener("click", exportAdjustedCSV);
+    if (btnDownloadJs) btnDownloadJs.addEventListener("click", exportAdjustedJS);
     if (btnCopyCoords) btnCopyCoords.addEventListener("click", copyAdjustedCoordinatesTable);
   }
 

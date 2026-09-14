@@ -897,7 +897,7 @@
     </div>
   </div>
 
-  <!-- Modal: Autenticação de Edição de Pontos (Georebs) -->
+  <!-- Modal: Autenticação de Edição de Pontos (Admin) -->
   <div id="admin-auth-modal" class="modal-lightbox-backdrop">
     <div class="export-dialog-card" style="max-width: 440px;">
       <div class="export-dialog-header">
@@ -905,7 +905,7 @@
           <span style="font-size:1.2rem;">🔐</span>
           <div>
             <h3 style="margin:0; font-size:1.05rem;">Modo Edição de Coordenadas</h3>
-            <p style="margin:2px 0 0 0; font-size:0.75rem; color:var(--muted);">Acesso restrito para calibração dos pontos de campo</p>
+            <p style="margin:2px 0 0 0; font-size:0.75rem; color:var(--muted);">Acesso administrativo para calibração dos pontos de campo</p>
           </div>
         </div>
         <button id="admin-auth-close-btn" class="modal-lightbox-close" style="position:static; font-size:1.1rem;" title="Fechar">✕</button>
@@ -913,12 +913,17 @@
 
       <div style="padding: 18px 22px; display: flex; flex-direction: column; gap: 14px;">
         <p style="font-size:0.84rem; color:var(--text-muted); line-height:1.45; margin:0;">
-          Para ativar o modo de arraste e ajuste fino dos marcadores no mapa, confirme o seu e-mail de GeoDeveloper autorizado:
+          Informe o usuário e senha de administrador para desbloquear o modo de calibração espacial:
         </p>
 
         <div>
-          <label style="display:block; font-weight:700; font-size:0.78rem; color:var(--forest-dark); margin-bottom:5px;">E-mail Autorizado:</label>
-          <input type="email" id="admin-auth-email-input" class="pdf-text-input" placeholder="georebs@gmail.com" autocomplete="email" style="width:100%; box-sizing:border-box; font-size:0.92rem; padding:10px 12px;">
+          <label style="display:block; font-weight:700; font-size:0.78rem; color:var(--forest-dark); margin-bottom:5px;">Usuário:</label>
+          <input type="text" id="admin-auth-user-input" class="pdf-text-input" placeholder="admin" value="admin" autocomplete="username" style="width:100%; box-sizing:border-box; font-size:0.92rem; padding:9px 12px;">
+        </div>
+
+        <div>
+          <label style="display:block; font-weight:700; font-size:0.78rem; color:var(--forest-dark); margin-bottom:5px;">Senha:</label>
+          <input type="password" id="admin-auth-pass-input" class="pdf-text-input" placeholder="Digite a senha" autocomplete="current-password" style="width:100%; box-sizing:border-box; font-size:0.92rem; padding:9px 12px;">
         </div>
 
         <div id="admin-auth-error" style="display:none; color:#dc2626; background:rgba(220,38,38,0.08); border:1px solid rgba(220,38,38,0.2); border-radius:6px; padding:8px 10px; font-size:0.80rem; font-weight:600;"></div>
@@ -959,6 +964,10 @@
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
             <span>Baixar CSV / Planilha</span>
           </button>
+          <button id="admin-download-adjusted-js-btn" class="btn btn-secondary btn-icon" style="flex:1; min-width:160px; justify-content:center;" title="Baixar arquivo de dados JS para sincronização permanente em todos os dispositivos">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+            <span>Baixar Dados Globais (JS)</span>
+          </button>
           <button id="admin-copy-coords-btn" class="btn btn-secondary btn-icon" style="flex:1; min-width:140px; justify-content:center;">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
             <span id="admin-copy-coords-btn-text">Copiar Coordenadas</span>
@@ -972,6 +981,7 @@
   <script src="logos_data.js"></script>
   <script src="layers_data.js"></script>
   <script src="initial_records.js"></script>
+  <script src="adjusted_coords_data.js"></script>
   <script src="app.js"></script>
 </body>
 </html>

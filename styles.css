@@ -3243,19 +3243,8 @@ html, body {
 }
 
 .risk-marker-pin.draggable-active {
-  box-shadow: 0 0 0 3px #fbbf24, 0 4px 12px rgba(0,0,0,0.5) !important;
-  transform: scale(1.18);
-  border-color: #fbbf24 !important;
-  animation: pinPulseEdit 1.8s infinite alternate;
-}
-
-@keyframes pinPulseEdit {
-  0% { box-shadow: 0 0 0 3px #fbbf24, 0 4px 10px rgba(0,0,0,0.4); }
-  100% { box-shadow: 0 0 0 6px rgba(251, 191, 36, 0.5), 0 6px 16px rgba(0,0,0,0.6); }
-}
-
-.risk-marker-pin.is-adjusted {
-  border: 2px dashed #fbbf24 !important;
+  box-shadow: 0 0 0 2.5px #f59e0b, 0 3px 8px rgba(0,0,0,0.4) !important;
+  border-color: #ffffff !important;
 }
 
 .point-adjusted-tag {
