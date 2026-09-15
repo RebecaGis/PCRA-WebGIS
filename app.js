@@ -295,20 +295,23 @@
 
           layer.bindPopup(
             "<div class='popup-custom-card'>" +
-              "<div class='popup-custom-header' style='color:#0284c7;display:flex;align-items:center;justify-content:space-between;'>" +
-                "<span>🚧 " + cod + " - OBRA DE CONTENÇÃO</span>" +
-                "<span style='font-size:0.72rem;padding:2px 8px;border-radius:999px;font-weight:700;color:#0284c7;background:rgba(2,132,199,0.12);border:1px solid #0284c740;'>Sec. de Obras (PJF)</span>" +
+              "<div style='display:flex;align-items:center;justify-content:space-between;gap:6px;margin-bottom:6px;padding-right:20px;'>" +
+                "<span style='font-size:0.70rem;font-weight:700;color:#0284c7;background:rgba(2,132,199,0.12);border:1px solid rgba(2,132,199,0.30);padding:2px 8px;border-radius:999px;text-transform:uppercase;letter-spacing:0.4px;'>🏛️ Sec. de Obras (PJF)</span>" +
+                "<span style='font-size:0.75rem;font-weight:800;color:#0284c7;background:rgba(2,132,199,0.16);border:1px solid rgba(2,132,199,0.35);padding:1px 7px;border-radius:4px;'>" + cod + "</span>" +
               "</div>" +
-              "<div class='popup-custom-addr'>Localização: <strong>" + rua + "</strong> · Parque Burnier, Juiz de Fora / MG</div>" +
-              "<div style='font-size:0.75rem;color:var(--text-muted);margin-top:6px;line-height:1.55;'>" +
+              "<div class='popup-custom-header' style='color:#0369a1;font-size:1.02rem;font-weight:800;line-height:1.3;margin:0 0 4px 0;padding-right:16px;'>" +
+                "🚧 " + nome +
+              "</div>" +
+              "<div class='popup-custom-addr' style='margin-bottom:6px;'>Localização: <strong>" + rua + "</strong> · Parque Burnier, Juiz de Fora / MG</div>" +
+              "<div style='font-size:0.75rem;color:var(--text-muted);margin-top:6px;line-height:1.55;border-top:1px solid var(--line);padding-top:6px;'>" +
                 "<strong>🏛️ Órgão Responsável:</strong> Secretaria de Obras (PJF)<br>" +
-                "<strong>📐 Área do Polígono:</strong> " + (p.area_m2 ? p.area_m2.toLocaleString('pt-BR') + " m² (" + (p.area_ha ? p.area_ha.toFixed(2) : (p.area_m2/10000).toFixed(2)) + " ha)" : "—") + "<br>" +
+                "<strong>📐 Área do Polígono:</strong> <strong>" + (p.area_m2 ? p.area_m2.toLocaleString('pt-BR') + " m² (" + (p.area_ha ? p.area_ha.toFixed(2) : (p.area_m2/10000).toFixed(2)) + " ha)" : "—") + "</strong><br>" +
                 "<strong>Perímetro:</strong> " + (p.perimetro_m ? p.perimetro_m.toLocaleString('pt-BR') + " m" : "—") + "<br>" +
                 "<strong>Tipologia:</strong> " + (p.tipo_intervencao || "Contenção de Encosta / Estabilização Geotécnica") + "<br>" +
-                "<strong>Status:</strong> <span style='color:#0284c7;font-weight:700;'>" + (p.status || "Prioritária / Planejada") + "</span><br>" +
+                "<strong>Status:</strong> <span style='color:#0284c7;font-weight:700;'>" + (p.status || "Secretaria de Obras (PJF)") + "</span><br>" +
                 "<strong>Finalidade:</strong> Estabilização de taludes e proteção direta das habitações e vias públicas contra deslizamentos." +
               "</div>" +
-            "</div>", { maxWidth: 330 }
+            "</div>", { maxWidth: 340 }
           );
         }
       });
@@ -922,7 +925,7 @@
 
       marker.bindPopup(
         "<div class='popup-custom-card'>" +
-          "<div style='display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;'>" +
+          "<div style='display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;padding-right:20px;'>" +
             "<span style='font-size:0.7rem;font-weight:700;color:var(--primary);'>PONTO " + String(rec.PontoNum).padStart(2, '0') + "</span>" +
             "<span style='background:" + color + ";color:#fff;font-size:0.68rem;font-weight:700;padding:2px 6px;border-radius:99px;'>" + getActiveRiskLabel(rec) + "</span>" +
           "</div>" +
