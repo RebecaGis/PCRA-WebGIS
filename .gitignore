@@ -11,5 +11,7 @@ Thumbs.db
 node_modules/
 .netlify/
 
-# Logs
+# Logs & Lock files
 *.log
+*.lock
+*.sr.lock

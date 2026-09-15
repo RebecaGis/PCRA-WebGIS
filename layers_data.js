@@ -37784,5 +37784,229 @@ window.PCRA_LAYERS = {
         }
       }
     ]
+  },
+  "obras_contencao": {
+    "type": "FeatureCollection",
+    "name": "obras_contencao",
+    "crs": {
+      "type": "name",
+      "properties": {
+        "name": "urn:ogc:def:crs:OGC:1.3:CRS84"
+      }
+    },
+    "features": [
+      {
+        "type": "Feature",
+        "id": 1,
+        "properties": {
+          "id": 1,
+          "codigo": "OC-01",
+          "nome": "Obra de Contenção - Rua Natalino José de Paula",
+          "rua_referencia": "Rua Natalino José de Paula",
+          "tipo_intervencao": "Contenção de Encosta / Estabilização Geotécnica",
+          "categoria": "Obras de Contenção",
+          "bairro": "Parque Burnier",
+          "municipio": "Juiz de Fora",
+          "uf": "MG",
+          "area_m2": 5904.6,
+          "area_ha": 0.5905,
+          "perimetro_m": 298.2,
+          "status": "Planejada / Prioritária (PCRA)",
+          "origem_dado": "Levantamento de Áreas Atingidas / Obras de Contenção"
+        },
+        "geometry": {
+          "type": "Polygon",
+          "coordinates": [
+            [
+              [
+                -43.32592955957622,
+                -21.7625867523165
+              ],
+              [
+                -43.32580023295476,
+                -21.76211641920999
+              ],
+              [
+                -43.3258831229315,
+                -21.76202268025402
+              ],
+              [
+                -43.32592158489506,
+                -21.76189855246071
+              ],
+              [
+                -43.32634513959717,
+                -21.76186157167204
+              ],
+              [
+                -43.32656289896376,
+                -21.76190801869128
+              ],
+              [
+                -43.32676029574218,
+                -21.76208534613551
+              ],
+              [
+                -43.3267662704453,
+                -21.76234840276535
+              ],
+              [
+                -43.32676590263914,
+                -21.76236130135078
+              ],
+              [
+                -43.32592955957622,
+                -21.7625867523165
+              ]
+            ]
+          ]
+        }
+      },
+      {
+        "type": "Feature",
+        "id": 2,
+        "properties": {
+          "id": 2,
+          "codigo": "OC-02",
+          "nome": "Obra de Contenção - Rua C (Polígono 2)",
+          "rua_referencia": "Rua C",
+          "tipo_intervencao": "Contenção de Encosta / Estabilização Geotécnica",
+          "categoria": "Obras de Contenção",
+          "bairro": "Parque Burnier",
+          "municipio": "Juiz de Fora",
+          "uf": "MG",
+          "area_m2": 3274.4,
+          "area_ha": 0.3274,
+          "perimetro_m": 265.8,
+          "status": "Planejada / Prioritária (PCRA)",
+          "origem_dado": "Levantamento de Áreas Atingidas / Obras de Contenção"
+        },
+        "geometry": {
+          "type": "Polygon",
+          "coordinates": [
+            [
+              [
+                -43.32851523090152,
+                -21.76083197911355
+              ],
+              [
+                -43.32862696829849,
+                -21.76099012801366
+              ],
+              [
+                -43.32789020691447,
+                -21.76162584890123
+              ],
+              [
+                -43.32768638950787,
+                -21.76139462363455
+              ],
+              [
+                -43.32818397373448,
+                -21.76096619340538
+              ],
+              [
+                -43.32851523090152,
+                -21.76083197911355
+              ]
+            ]
+          ]
+        }
+      },
+      {
+        "type": "Feature",
+        "id": 3,
+        "properties": {
+          "id": 3,
+          "codigo": "OC-03",
+          "nome": "Obra de Contenção - Rua José Teodoro dos Santos",
+          "rua_referencia": "Rua José Teodoro dos Santos",
+          "tipo_intervencao": "Contenção de Encosta / Estabilização Geotécnica",
+          "categoria": "Obras de Contenção",
+          "bairro": "Parque Burnier",
+          "municipio": "Juiz de Fora",
+          "uf": "MG",
+          "area_m2": 3699.2,
+          "area_ha": 0.3699,
+          "perimetro_m": 335.6,
+          "status": "Planejada / Prioritária (PCRA)",
+          "origem_dado": "Levantamento de Áreas Atingidas / Obras de Contenção"
+        },
+        "geometry": {
+          "type": "Polygon",
+          "coordinates": [
+            [
+              [
+                -43.32803845348317,
+                -21.76229270822056
+              ],
+              [
+                -43.32818547077775,
+                -21.7624486431919
+              ],
+              [
+                -43.32775100207795,
+                -21.76362969604834
+              ],
+              [
+                -43.32749245675502,
+                -21.76343561184309
+              ],
+              [
+                -43.32803845348317,
+                -21.76229270822056
+              ]
+            ]
+          ]
+        }
+      },
+      {
+        "type": "Feature",
+        "id": 4,
+        "properties": {
+          "id": 4,
+          "codigo": "OC-04",
+          "nome": "Obra de Contenção - Rua C (Polígono 4)",
+          "rua_referencia": "Rua C",
+          "tipo_intervencao": "Contenção de Encosta / Estabilização Geotécnica",
+          "categoria": "Obras de Contenção",
+          "bairro": "Parque Burnier",
+          "municipio": "Juiz de Fora",
+          "uf": "MG",
+          "area_m2": 1029.6,
+          "area_ha": 0.103,
+          "perimetro_m": 136.0,
+          "status": "Planejada / Prioritária (PCRA)",
+          "origem_dado": "Levantamento de Áreas Atingidas / Obras de Contenção"
+        },
+        "geometry": {
+          "type": "Polygon",
+          "coordinates": [
+            [
+              [
+                -43.32806965176398,
+                -21.76089590894795
+              ],
+              [
+                -43.3280183557787,
+                -21.7606767428147
+              ],
+              [
+                -43.32841666913571,
+                -21.76054797785041
+              ],
+              [
+                -43.32847839904327,
+                -21.76073109781771
+              ],
+              [
+                -43.32806965176398,
+                -21.76089590894795
+              ]
+            ]
+          ]
+        }
+      }
+    ]
   }
 };

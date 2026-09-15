@@ -270,6 +270,50 @@
       return chk ? chk.checked : false;
     };
 
+    if (data.obras_contencao) {
+      overlayLayers.obras_contencao = L.geoJSON(data.obras_contencao, {
+        style: function (feat) {
+          return {
+            color: "#0284c7",
+            weight: 2.8,
+            dashArray: "5, 4",
+            fillOpacity: 0.28,
+            fillColor: "#38bdf8"
+          };
+        },
+        onEachFeature: function (feat, layer) {
+          const p = feat.properties || {};
+          const nome = p.nome || ("Obra de Contenção " + (p.codigo || ""));
+          const cod = p.codigo || "OC";
+          const rua = p.rua_referencia || p.local || "Parque Burnier";
+
+          layer.bindTooltip("<strong>🚧 " + (p.codigo ? p.codigo + " · " : "") + nome + "</strong>", {
+            permanent: false,
+            direction: "center",
+            className: "custom-area-tooltip"
+          });
+
+          layer.bindPopup(
+            "<div class='popup-custom-card'>" +
+              "<div class='popup-custom-header' style='color:#0284c7;display:flex;align-items:center;justify-content:space-between;'>" +
+                "<span>🚧 " + cod + " - OBRA DE CONTENÇÃO</span>" +
+                "<span style='font-size:0.72rem;padding:2px 8px;border-radius:999px;font-weight:700;color:#0284c7;background:rgba(2,132,199,0.12);border:1px solid #0284c740;'>Plano PCRA</span>" +
+              "</div>" +
+              "<div class='popup-custom-addr'>Localização: <strong>" + rua + "</strong> · Parque Burnier, Juiz de Fora / MG</div>" +
+              "<div style='font-size:0.75rem;color:var(--text-muted);margin-top:6px;line-height:1.55;'>" +
+                "<strong>📐 Área do Polígono:</strong> " + (p.area_m2 ? p.area_m2.toLocaleString('pt-BR') + " m² (" + (p.area_ha ? p.area_ha.toFixed(2) : (p.area_m2/10000).toFixed(2)) + " ha)" : "—") + "<br>" +
+                "<strong>Perímetro:</strong> " + (p.perimetro_m ? p.perimetro_m.toLocaleString('pt-BR') + " m" : "—") + "<br>" +
+                "<strong>Tipologia:</strong> " + (p.tipo_intervencao || "Contenção de Encosta / Estabilização Geotécnica") + "<br>" +
+                "<strong>Status:</strong> <span style='color:#0284c7;font-weight:700;'>" + (p.status || "Prioritária / Planejada") + "</span><br>" +
+                "<strong>Finalidade:</strong> Estabilização de taludes e proteção direta das habitações e vias públicas contra deslizamentos." +
+              "</div>" +
+            "</div>", { maxWidth: 330 }
+          );
+        }
+      });
+      if (isLayerChecked("obras_contencao")) overlayLayers.obras_contencao.addTo(map);
+    }
+
     if (data.area_atuacao_pcra) {
       overlayLayers.area_atuacao_pcra = L.geoJSON(data.area_atuacao_pcra, {
         style: { color: "#16a34a", weight: 2.8, dashArray: "6, 4", fillOpacity: 0.08, fillColor: "#16a34a" },
@@ -1625,22 +1669,27 @@
         folder.file("08_areas_prioritarias_plano_de_acao.geojson", JSON.stringify(allLayers.areas_prioritarias, null, 2));
         folder.file("08_areas_prioritarias_plano_de_acao.kml", convertGeoJSONToKML(allLayers.areas_prioritarias, "Áreas Prioritárias (Plano de Ação)"));
       }
-      // 9. ADES HIS
-      if (allLayers.ades_his) {
-        folder.file("09_ades_his_parque_burnier.geojson", JSON.stringify(allLayers.ades_his, null, 2));
-        folder.file("09_ades_his_parque_burnier.kml", convertGeoJSONToKML(allLayers.ades_his, "ADES HIS Parque Burnier"));
+      // 9. Obras de Contenção
+      if (allLayers.obras_contencao) {
+        folder.file("09_obras_contencao_parque_burnier.geojson", JSON.stringify(allLayers.obras_contencao, null, 2));
+        folder.file("09_obras_contencao_parque_burnier.kml", convertGeoJSONToKML(allLayers.obras_contencao, "Obras de Contenção PCRA"));
       }
-      // 10. Equipamentos Comunitários
+      // 10. ADES HIS
+      if (allLayers.ades_his) {
+        folder.file("10_ades_his_parque_burnier.geojson", JSON.stringify(allLayers.ades_his, null, 2));
+        folder.file("10_ades_his_parque_burnier.kml", convertGeoJSONToKML(allLayers.ades_his, "ADES HIS Parque Burnier"));
+      }
+      // 11. Equipamentos Comunitários
       const featEquip = [];
       if (allLayers.equip_escolas && allLayers.equip_escolas.features) featEquip.push.apply(featEquip, allLayers.equip_escolas.features);
       if (allLayers.equip_saude && allLayers.equip_saude.features) featEquip.push.apply(featEquip, allLayers.equip_saude.features);
       if (allLayers.equip_instituicoes_religiosas && allLayers.equip_instituicoes_religiosas.features) featEquip.push.apply(featEquip, allLayers.equip_instituicoes_religiosas.features);
       if (featEquip.length > 0) {
         const equipGeoJSON = { type: "FeatureCollection", name: "equipamentos_comunitarios", features: featEquip };
-        folder.file("10_equipamentos_comunitarios.geojson", JSON.stringify(equipGeoJSON, null, 2));
-        folder.file("10_equipamentos_comunitarios.kml", convertGeoJSONToKML(equipGeoJSON, "Equipamentos Comunitários"));
+        folder.file("11_equipamentos_comunitarios.geojson", JSON.stringify(equipGeoJSON, null, 2));
+        folder.file("11_equipamentos_comunitarios.kml", convertGeoJSONToKML(equipGeoJSON, "Equipamentos Comunitários"));
       }
-      // 11. README
+      // 12. README
       const readme = "=========================================================\n" +
         "PLANO COMUNITÁRIO DE REDUÇÃO DE RISCOS (PCRA) — PARQUE BURNIER\n" +
         "PACOTE DE DADOS GEOESPACIAIS VETORIAIS (SIG / WEBGIS)\n" +
@@ -1651,15 +1700,16 @@
         "Parceria: Ministério das Cidades / Governo Federal & Periferia Sem Risco\n\n" +
         "Arquivos Geoespaciais incluídos:\n" +
         "- 01_vistorias_campo_pcra (Vistorias e diagnósticos de risco socioterritorial)\n" +
-        "- 02_situacao_edificacoes_146 (146 imóveis cadastrados pela Defesa Civil: Interditadas, Destruídas, Atingidas e Adjacentes)\n" +
+        "- 02_situacao_edificacoes_146 (146 imóveis cadastrados pela Defesa Civil)\n" +
         "- 03_ocorrencias_defesa_civil_745 (745 boletins históricos da Defesa Civil)\n" +
         "- 04_area_inaproveitavel (6 polígonos de restrição geotécnica - 26.429 m²)\n" +
         "- 05_lotes_caixa_economica (59 lotes cadastrados da Caixa - 18.858 m²)\n" +
         "- 06_setores_risco_geologico (Setores de Risco Geológico R1, R2, R3 e R4)\n" +
         "- 07_area_atuacao_pcra_burnier (Polígono perimetral de atuação do projeto - 17,49 ha)\n" +
         "- 08_areas_prioritarias_plano_de_acao (5 polígonos de intervenção prioritária - 4,24 ha)\n" +
-        "- 09_ades_his_parque_burnier (Perímetro da Área de Especial Interesse Social)\n" +
-        "- 10_equipamentos_comunitarios (Escolas, Saúde e Instituições Religiosas)\n";
+        "- 09_obras_contencao_parque_burnier (4 polígonos de contenção e estabilização de encostas - 13.907 m²)\n" +
+        "- 10_ades_his_parque_burnier (Perímetro da Área de Especial Interesse Social)\n" +
+        "- 11_equipamentos_comunitarios (Escolas, Saúde e Instituições Religiosas)\n";
       folder.file("LEIAME_METADADOS.txt", readme);
 
       const blob = await zip.generateAsync({ type: "blob" });
@@ -1698,7 +1748,12 @@
       return overlayLayers[key] && map.hasLayer(overlayLayers[key]);
     };
 
-    // 2. Situação Edificações (146 imóveis)
+    // 2. Obras de Contenção
+    if (isLayerActive("obras_contencao")) {
+      active.push({ type: "polygon_dashed", label: "Obras de Contenção (4 pol. · 1,39 ha)", fill: [224, 242, 254], stroke: [2, 132, 199] });
+    }
+
+    // 3. Situação Edificações (146 imóveis)
     if (isLayerActive("situacao_edificacoes")) {
       active.push({ type: "point", label: "Edificação Interditada (90)", fill: [234, 88, 12], stroke: [234, 88, 12] });
       active.push({ type: "point", label: "Edificação Destruída (22)", fill: [185, 28, 28], stroke: [185, 28, 28] });
