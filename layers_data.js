@@ -37804,15 +37804,17 @@ window.PCRA_LAYERS = {
           "nome": "Obra de Contenção - Rua Natalino José de Paula",
           "rua_referencia": "Rua Natalino José de Paula",
           "tipo_intervencao": "Contenção de Encosta / Estabilização Geotécnica",
-          "categoria": "Obras de Contenção",
+          "categoria": "Obras de Contenção (Secretaria de Obras)",
           "bairro": "Parque Burnier",
           "municipio": "Juiz de Fora",
           "uf": "MG",
           "area_m2": 5904.6,
           "area_ha": 0.5905,
           "perimetro_m": 298.2,
-          "status": "Planejada / Prioritária (PCRA)",
-          "origem_dado": "Levantamento de Áreas Atingidas / Obras de Contenção"
+          "status": "Secretaria de Obras (PJF)",
+          "origem_dado": "Secretaria de Obras / PJF (Áreas Atingidas)",
+          "orgao_responsavel": "Secretaria de Obras (PJF)",
+          "fonte": "Secretaria de Obras - PJF"
         },
         "geometry": {
           "type": "Polygon",
@@ -37871,15 +37873,17 @@ window.PCRA_LAYERS = {
           "nome": "Obra de Contenção - Rua C (Polígono 2)",
           "rua_referencia": "Rua C",
           "tipo_intervencao": "Contenção de Encosta / Estabilização Geotécnica",
-          "categoria": "Obras de Contenção",
+          "categoria": "Obras de Contenção (Secretaria de Obras)",
           "bairro": "Parque Burnier",
           "municipio": "Juiz de Fora",
           "uf": "MG",
           "area_m2": 3274.4,
           "area_ha": 0.3274,
           "perimetro_m": 265.8,
-          "status": "Planejada / Prioritária (PCRA)",
-          "origem_dado": "Levantamento de Áreas Atingidas / Obras de Contenção"
+          "status": "Secretaria de Obras (PJF)",
+          "origem_dado": "Secretaria de Obras / PJF (Áreas Atingidas)",
+          "orgao_responsavel": "Secretaria de Obras (PJF)",
+          "fonte": "Secretaria de Obras - PJF"
         },
         "geometry": {
           "type": "Polygon",
@@ -37922,15 +37926,17 @@ window.PCRA_LAYERS = {
           "nome": "Obra de Contenção - Rua José Teodoro dos Santos",
           "rua_referencia": "Rua José Teodoro dos Santos",
           "tipo_intervencao": "Contenção de Encosta / Estabilização Geotécnica",
-          "categoria": "Obras de Contenção",
+          "categoria": "Obras de Contenção (Secretaria de Obras)",
           "bairro": "Parque Burnier",
           "municipio": "Juiz de Fora",
           "uf": "MG",
           "area_m2": 3699.2,
           "area_ha": 0.3699,
           "perimetro_m": 335.6,
-          "status": "Planejada / Prioritária (PCRA)",
-          "origem_dado": "Levantamento de Áreas Atingidas / Obras de Contenção"
+          "status": "Secretaria de Obras (PJF)",
+          "origem_dado": "Secretaria de Obras / PJF (Áreas Atingidas)",
+          "orgao_responsavel": "Secretaria de Obras (PJF)",
+          "fonte": "Secretaria de Obras - PJF"
         },
         "geometry": {
           "type": "Polygon",
@@ -37969,15 +37975,17 @@ window.PCRA_LAYERS = {
           "nome": "Obra de Contenção - Rua C (Polígono 4)",
           "rua_referencia": "Rua C",
           "tipo_intervencao": "Contenção de Encosta / Estabilização Geotécnica",
-          "categoria": "Obras de Contenção",
+          "categoria": "Obras de Contenção (Secretaria de Obras)",
           "bairro": "Parque Burnier",
           "municipio": "Juiz de Fora",
           "uf": "MG",
           "area_m2": 1029.6,
           "area_ha": 0.103,
           "perimetro_m": 136.0,
-          "status": "Planejada / Prioritária (PCRA)",
-          "origem_dado": "Levantamento de Áreas Atingidas / Obras de Contenção"
+          "status": "Secretaria de Obras (PJF)",
+          "origem_dado": "Secretaria de Obras / PJF (Áreas Atingidas)",
+          "orgao_responsavel": "Secretaria de Obras (PJF)",
+          "fonte": "Secretaria de Obras - PJF"
         },
         "geometry": {
           "type": "Polygon",

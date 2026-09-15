@@ -297,10 +297,11 @@
             "<div class='popup-custom-card'>" +
               "<div class='popup-custom-header' style='color:#0284c7;display:flex;align-items:center;justify-content:space-between;'>" +
                 "<span>🚧 " + cod + " - OBRA DE CONTENÇÃO</span>" +
-                "<span style='font-size:0.72rem;padding:2px 8px;border-radius:999px;font-weight:700;color:#0284c7;background:rgba(2,132,199,0.12);border:1px solid #0284c740;'>Plano PCRA</span>" +
+                "<span style='font-size:0.72rem;padding:2px 8px;border-radius:999px;font-weight:700;color:#0284c7;background:rgba(2,132,199,0.12);border:1px solid #0284c740;'>Sec. de Obras (PJF)</span>" +
               "</div>" +
               "<div class='popup-custom-addr'>Localização: <strong>" + rua + "</strong> · Parque Burnier, Juiz de Fora / MG</div>" +
               "<div style='font-size:0.75rem;color:var(--text-muted);margin-top:6px;line-height:1.55;'>" +
+                "<strong>🏛️ Órgão Responsável:</strong> Secretaria de Obras (PJF)<br>" +
                 "<strong>📐 Área do Polígono:</strong> " + (p.area_m2 ? p.area_m2.toLocaleString('pt-BR') + " m² (" + (p.area_ha ? p.area_ha.toFixed(2) : (p.area_m2/10000).toFixed(2)) + " ha)" : "—") + "<br>" +
                 "<strong>Perímetro:</strong> " + (p.perimetro_m ? p.perimetro_m.toLocaleString('pt-BR') + " m" : "—") + "<br>" +
                 "<strong>Tipologia:</strong> " + (p.tipo_intervencao || "Contenção de Encosta / Estabilização Geotécnica") + "<br>" +
@@ -1535,6 +1536,9 @@
       if (allLayers.equip_instituicoes_religiosas && allLayers.equip_instituicoes_religiosas.features) featList.push.apply(featList, allLayers.equip_instituicoes_religiosas.features);
       geojson = { type: "FeatureCollection", name: "equipamentos_comunitarios", features: featList };
       fileName = "pcra_equipamentos_comunitarios";
+    } else if (layerKey === "obras_contencao") {
+      geojson = allLayers.obras_contencao;
+      fileName = "obras_contencao_secretaria_de_obras";
     } else if (allLayers[layerKey]) {
       geojson = allLayers[layerKey];
     }
@@ -1671,8 +1675,8 @@
       }
       // 9. Obras de Contenção
       if (allLayers.obras_contencao) {
-        folder.file("09_obras_contencao_parque_burnier.geojson", JSON.stringify(allLayers.obras_contencao, null, 2));
-        folder.file("09_obras_contencao_parque_burnier.kml", convertGeoJSONToKML(allLayers.obras_contencao, "Obras de Contenção PCRA"));
+        folder.file("09_obras_contencao_secretaria_de_obras.geojson", JSON.stringify(allLayers.obras_contencao, null, 2));
+        folder.file("09_obras_contencao_secretaria_de_obras.kml", convertGeoJSONToKML(allLayers.obras_contencao, "Obras de Contenção - Secretaria de Obras"));
       }
       // 10. ADES HIS
       if (allLayers.ades_his) {
@@ -1707,7 +1711,7 @@
         "- 06_setores_risco_geologico (Setores de Risco Geológico R1, R2, R3 e R4)\n" +
         "- 07_area_atuacao_pcra_burnier (Polígono perimetral de atuação do projeto - 17,49 ha)\n" +
         "- 08_areas_prioritarias_plano_de_acao (5 polígonos de intervenção prioritária - 4,24 ha)\n" +
-        "- 09_obras_contencao_parque_burnier (4 polígonos de contenção e estabilização de encostas - 13.907 m²)\n" +
+        "- 09_obras_contencao_secretaria_de_obras (4 polígonos de contenção da Secretaria de Obras - PJF - 13.907 m²)\n" +
         "- 10_ades_his_parque_burnier (Perímetro da Área de Especial Interesse Social)\n" +
         "- 11_equipamentos_comunitarios (Escolas, Saúde e Instituições Religiosas)\n";
       folder.file("LEIAME_METADADOS.txt", readme);
@@ -1750,7 +1754,7 @@
 
     // 2. Obras de Contenção
     if (isLayerActive("obras_contencao")) {
-      active.push({ type: "polygon_dashed", label: "Obras de Contenção (4 pol. · 1,39 ha)", fill: [224, 242, 254], stroke: [2, 132, 199] });
+      active.push({ type: "polygon_dashed", label: "Obras de Contenção · Sec. de Obras (4 pol. · 1,39 ha)", fill: [224, 242, 254], stroke: [2, 132, 199] });
     }
 
     // 3. Situação Edificações (146 imóveis)
