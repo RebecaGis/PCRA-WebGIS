@@ -42586,50 +42586,57 @@ window.PCRA_GLOBAL_ADJUSTMENTS = window.PCRA_GLOBAL_ADJUSTMENTS || {};
     measureInstruction: document.getElementById("measure-instruction")
   };
 
-  const map = L.map("map-view", { zoomControl: false, maxZoom: 22, preferCanvas: true }).setView([-21.7623, -43.3280], 17);
+  const map = L.map("map-view", { zoomControl: false, minZoom: 12, maxZoom: 25, preferCanvas: true }).setView([-21.7623, -43.3280], 17);
   L.control.zoom({ position: "bottomright" }).addTo(map);
 
   const basemaps = {
     "ortofoto": L.layerGroup([
       L.tileLayer("https://mt{s}.google.com/vt/lyrs=y&x={x}&y={y}&z={z}", {
-        maxZoom: 22,
+        maxZoom: 25,
+        maxNativeZoom: 22,
         subdomains: ["0", "1", "2", "3"],
         attribution: "Google Maps"
       }),
       L.tileLayer("./tiles_ortofoto/{z}/{x}/{y}.webp", {
         minZoom: 13,
-        maxZoom: 22,
-        maxNativeZoom: 20,
+        maxZoom: 25,
+        maxNativeZoom: 21,
         bounds: [[-21.7685, -43.3375], [-21.7580, -43.3230]],
         attribution: "Ortofoto Parque Burnier · Voo Drone HD (PCRA)"
       })
     ]),
     "google-hybrid": L.tileLayer("https://mt{s}.google.com/vt/lyrs=y&x={x}&y={y}&z={z}", {
-      maxZoom: 22,
+      maxZoom: 25,
+      maxNativeZoom: 22,
       subdomains: ["0", "1", "2", "3"],
       attribution: "Google Maps & Maxar Satellite"
     }),
     "google-satellite": L.tileLayer("https://mt{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}", {
-      maxZoom: 22,
+      maxZoom: 25,
+      maxNativeZoom: 22,
       subdomains: ["0", "1", "2", "3"],
       attribution: "Google Maps Satellite"
     }),
     "esri-satellite": L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}", {
-      maxZoom: 20,
+      maxZoom: 25,
+      maxNativeZoom: 19,
       attribution: "Esri / Maxar World Imagery"
     }),
     "google-streets": L.tileLayer("https://mt{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}", {
-      maxZoom: 22,
+      maxZoom: 25,
+      maxNativeZoom: 22,
       subdomains: ["0", "1", "2", "3"],
       attribution: "Google Maps"
     }),
     "osm": L.tileLayer("https://{s}.tile.openstreetmap.fr/osmfr/{z}/{x}/{y}.png", {
-      maxZoom: 20,
+      maxZoom: 25,
+      maxNativeZoom: 19,
       subdomains: ["a", "b", "c"],
       attribution: "&copy; <a href='https://www.openstreetmap.org/copyright' target='_blank'>OpenStreetMap</a> contributors"
     }),
     "carto-voyager": L.tileLayer("https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png", {
-      maxZoom: 20,
+      maxZoom: 25,
+      maxNativeZoom: 20,
       subdomains: "abcd",
       attribution: "&copy; <a href='https://www.openstreetmap.org/copyright' target='_blank'>OpenStreetMap</a>, &copy; <a href='https://carto.com/attributions' target='_blank'>CARTO</a>"
     })
@@ -43033,8 +43040,8 @@ window.PCRA_GLOBAL_ADJUSTMENTS = window.PCRA_GLOBAL_ADJUSTMENTS || {};
     // Camada Ortofoto Sobreposta (Drone HD - Alta Resolução com Opacidade Ajustável)
     overlayLayers.ortofoto_overlay = L.tileLayer("./tiles_ortofoto/{z}/{x}/{y}.webp", {
       minZoom: 13,
-      maxZoom: 22,
-      maxNativeZoom: 20,
+      maxZoom: 25,
+      maxNativeZoom: 21,
       opacity: 0.85,
       bounds: [[-21.7685, -43.3375], [-21.7580, -43.3230]],
       attribution: "Ortofoto Parque Burnier · Voo Drone HD (PCRA)"
@@ -43044,7 +43051,7 @@ window.PCRA_GLOBAL_ADJUSTMENTS = window.PCRA_GLOBAL_ADJUSTMENTS || {};
     // Camada Declividade Sobreposta (Recorte ADES HIS com Opacidade Ajustável)
     overlayLayers.declividade_overlay = L.tileLayer("./tiles_declividade/{z}/{x}/{y}.webp", {
       minZoom: 13,
-      maxZoom: 22,
+      maxZoom: 25,
       maxNativeZoom: 20,
       opacity: 0.80,
       bounds: [[-21.7655, -43.3365], [-21.7588, -43.3250]],
