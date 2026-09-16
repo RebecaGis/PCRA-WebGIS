@@ -3629,44 +3629,48 @@ html, body {
 .anotacao-badge { font-size: 0.8rem; }
 .anotacao-text { max-width: 180px; overflow: hidden; text-overflow: ellipsis; }
 
-/* Camada Mapeamento Participativo Linha Única com Botão */
+/* Camada Mapeamento Participativo Card na Lista de Camadas */
+.layer-mapeamento-card,
 .layer-mapeamento-row {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 6px;
+  flex-direction: column;
+  gap: 5px;
   background: rgba(124, 58, 237, 0.06);
   border: 1.5px solid rgba(124, 58, 237, 0.25);
   border-radius: 6px;
-  padding: 5px 8px;
+  padding: 6px 8px;
   margin: 4px 0;
+  box-sizing: border-box;
 }
 
+[data-theme="dark"] .layer-mapeamento-card,
 [data-theme="dark"] .layer-mapeamento-row {
   background: rgba(124, 58, 237, 0.15);
   border-color: rgba(124, 58, 237, 0.4);
 }
 
 .btn-ver-legenda-pill {
+  width: 100%;
+  box-sizing: border-box;
   background: #7c3aed;
   color: #ffffff;
   border: none;
   border-radius: 4px;
-  padding: 3px 8px;
-  font-size: 0.68rem;
+  padding: 5px 8px;
+  font-size: 0.70rem;
   font-weight: 700;
   cursor: pointer;
   white-space: nowrap;
   transition: all 0.15s ease;
   box-shadow: 0 1px 3px rgba(124, 58, 237, 0.3);
-  display: inline-flex;
+  display: flex;
   align-items: center;
-  gap: 3px;
-  flex-shrink: 0;
+  justify-content: center;
+  gap: 4px;
 }
 
 .btn-ver-legenda-pill:hover {
   background: #6d28d9;
   transform: translateY(-1px);
-  box-shadow: 0 2px 6px rgba(124, 58, 237, 0.45);
+  box-shadow: 0 2px 5px rgba(124, 58, 237, 0.4);
 }

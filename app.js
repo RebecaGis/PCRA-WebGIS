@@ -193,50 +193,58 @@
         maxZoom: 25,
         maxNativeZoom: 22,
         subdomains: ["0", "1", "2", "3"],
-        attribution: "Google Maps"
+        attribution: "Google Maps",
+        zIndex: 1
       }),
       L.tileLayer("./tiles_ortofoto/{z}/{x}/{y}.webp", {
         minZoom: 13,
         maxZoom: 25,
         maxNativeZoom: 21,
-        bounds: [[-21.7685, -43.3375], [-21.7580, -43.3230]],
-        attribution: "Ortofoto Parque Burnier · Voo Drone HD (PCRA)"
+        bounds: [[-21.7710, -43.3400], [-21.7550, -43.3200]],
+        attribution: "Ortofoto Parque Burnier · Voo Drone HD (PCRA)",
+        zIndex: 2
       })
     ]),
     "google-hybrid": L.tileLayer("https://mt{s}.google.com/vt/lyrs=y&x={x}&y={y}&z={z}", {
       maxZoom: 25,
       maxNativeZoom: 22,
       subdomains: ["0", "1", "2", "3"],
-      attribution: "Google Maps & Maxar Satellite"
+      attribution: "Google Maps & Maxar Satellite",
+      zIndex: 1
     }),
     "google-satellite": L.tileLayer("https://mt{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}", {
       maxZoom: 25,
       maxNativeZoom: 22,
       subdomains: ["0", "1", "2", "3"],
-      attribution: "Google Maps Satellite"
+      attribution: "Google Maps Satellite",
+      zIndex: 1
     }),
     "esri-satellite": L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}", {
       maxZoom: 25,
       maxNativeZoom: 19,
-      attribution: "Esri / Maxar World Imagery"
+      attribution: "Esri / Maxar World Imagery",
+      zIndex: 1
     }),
     "google-streets": L.tileLayer("https://mt{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}", {
       maxZoom: 25,
       maxNativeZoom: 22,
       subdomains: ["0", "1", "2", "3"],
-      attribution: "Google Maps"
+      attribution: "Google Maps",
+      zIndex: 1
     }),
     "osm": L.tileLayer("https://{s}.tile.openstreetmap.fr/osmfr/{z}/{x}/{y}.png", {
       maxZoom: 25,
       maxNativeZoom: 19,
       subdomains: ["a", "b", "c"],
-      attribution: "&copy; <a href='https://www.openstreetmap.org/copyright' target='_blank'>OpenStreetMap</a> contributors"
+      attribution: "&copy; <a href='https://www.openstreetmap.org/copyright' target='_blank'>OpenStreetMap</a> contributors",
+      zIndex: 1
     }),
     "carto-voyager": L.tileLayer("https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png", {
       maxZoom: 25,
       maxNativeZoom: 20,
       subdomains: "abcd",
-      attribution: "&copy; <a href='https://www.openstreetmap.org/copyright' target='_blank'>OpenStreetMap</a>, &copy; <a href='https://carto.com/attributions' target='_blank'>CARTO</a>"
+      attribution: "&copy; <a href='https://www.openstreetmap.org/copyright' target='_blank'>OpenStreetMap</a>, &copy; <a href='https://carto.com/attributions' target='_blank'>CARTO</a>",
+      zIndex: 1
     })
   };
 
@@ -273,6 +281,10 @@
     if (!data) return;
 
     const isLayerChecked = function (key) {
+      if (key && key.startsWith("percepcao_")) {
+        const partChk = document.getElementById("toggle-mapeamento-participativo");
+        return partChk ? partChk.checked : true;
+      }
       const chk = document.querySelector('.layer-toggle-checkbox[data-layer="' + key + '"]');
       return chk ? chk.checked : false;
     };
@@ -867,8 +879,9 @@
       maxZoom: 25,
       maxNativeZoom: 21,
       opacity: 0.85,
-      bounds: [[-21.7685, -43.3375], [-21.7580, -43.3230]],
-      attribution: "Ortofoto Parque Burnier · Voo Drone HD (PCRA)"
+      bounds: [[-21.7710, -43.3400], [-21.7550, -43.3200]],
+      attribution: "Ortofoto Parque Burnier · Voo Drone HD (PCRA)",
+      zIndex: 5
     });
     if (isLayerChecked("ortofoto_overlay")) overlayLayers.ortofoto_overlay.addTo(map);
 
@@ -878,8 +891,9 @@
       maxZoom: 25,
       maxNativeZoom: 20,
       opacity: 0.80,
-      bounds: [[-21.7655, -43.3365], [-21.7588, -43.3250]],
-      attribution: "Declividade (Classes % - 0.50m) · ADES HIS Parque Burnier"
+      bounds: [[-21.7670, -43.3380], [-21.7570, -43.3230]],
+      attribution: "Declividade (Classes % - 0.50m) · ADES HIS Parque Burnier",
+      zIndex: 6
     });
     if (isLayerChecked("declividade_overlay")) overlayLayers.declividade_overlay.addTo(map);
   }
@@ -2507,7 +2521,17 @@
         if (basemaps[key]) {
           map.removeLayer(activeBasemapLayer);
           activeBasemapLayer = basemaps[key].addTo(map);
-          activeBasemapLayer.bringToBack();
+          if (activeBasemapLayer.eachLayer) {
+            const sublayers = activeBasemapLayer.getLayers();
+            if (sublayers.length >= 2) {
+              if (sublayers[0].bringToBack) sublayers[0].bringToBack();
+              if (sublayers[1].bringToFront) sublayers[1].bringToFront();
+            } else if (activeBasemapLayer.bringToBack) {
+              activeBasemapLayer.bringToBack();
+            }
+          } else if (activeBasemapLayer.bringToBack) {
+            activeBasemapLayer.bringToBack();
+          }
           els.basemapBtns.forEach(function(b) { b.classList.toggle("active", b === btn); });
         }
       });

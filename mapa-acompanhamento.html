@@ -3661,46 +3661,50 @@ html, body {
 .anotacao-badge { font-size: 0.8rem; }
 .anotacao-text { max-width: 180px; overflow: hidden; text-overflow: ellipsis; }
 
-/* Camada Mapeamento Participativo Linha Única com Botão */
+/* Camada Mapeamento Participativo Card na Lista de Camadas */
+.layer-mapeamento-card,
 .layer-mapeamento-row {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 6px;
+  flex-direction: column;
+  gap: 5px;
   background: rgba(124, 58, 237, 0.06);
   border: 1.5px solid rgba(124, 58, 237, 0.25);
   border-radius: 6px;
-  padding: 5px 8px;
+  padding: 6px 8px;
   margin: 4px 0;
+  box-sizing: border-box;
 }
 
+[data-theme="dark"] .layer-mapeamento-card,
 [data-theme="dark"] .layer-mapeamento-row {
   background: rgba(124, 58, 237, 0.15);
   border-color: rgba(124, 58, 237, 0.4);
 }
 
 .btn-ver-legenda-pill {
+  width: 100%;
+  box-sizing: border-box;
   background: #7c3aed;
   color: #ffffff;
   border: none;
   border-radius: 4px;
-  padding: 3px 8px;
-  font-size: 0.68rem;
+  padding: 5px 8px;
+  font-size: 0.70rem;
   font-weight: 700;
   cursor: pointer;
   white-space: nowrap;
   transition: all 0.15s ease;
   box-shadow: 0 1px 3px rgba(124, 58, 237, 0.3);
-  display: inline-flex;
+  display: flex;
   align-items: center;
-  gap: 3px;
-  flex-shrink: 0;
+  justify-content: center;
+  gap: 4px;
 }
 
 .btn-ver-legenda-pill:hover {
   background: #6d28d9;
   transform: translateY(-1px);
-  box-shadow: 0 2px 6px rgba(124, 58, 237, 0.45);
+  box-shadow: 0 2px 5px rgba(124, 58, 237, 0.4);
 }
 
 </style>
@@ -4134,9 +4138,9 @@ html, body {
               </div>
             </div>
 
-                                    <!-- Camada Mapeamento Participativo com Botão de Legenda -->
-            <div class="layer-mapeamento-row">
-              <label class="layer-item" style="cursor:pointer;flex:1;margin:0;font-weight:700;color:var(--forest-dark);">
+                                    <!-- Camada Mapeamento Participativo com Botão de Legenda (Card Sem Truncamento) -->
+            <div class="layer-mapeamento-card">
+              <label class="layer-item" style="cursor:pointer;margin:0;font-weight:700;color:var(--forest-dark);">
                 <input type="checkbox" id="toggle-mapeamento-participativo" class="layer-toggle-checkbox" checked>
                 <span class="layer-symbol-emoji">🤝</span>
                 <span>Mapeamento Participativo</span>
@@ -43119,50 +43123,58 @@ window.PCRA_GLOBAL_ADJUSTMENTS = window.PCRA_GLOBAL_ADJUSTMENTS || {};
         maxZoom: 25,
         maxNativeZoom: 22,
         subdomains: ["0", "1", "2", "3"],
-        attribution: "Google Maps"
+        attribution: "Google Maps",
+        zIndex: 1
       }),
       L.tileLayer("./tiles_ortofoto/{z}/{x}/{y}.webp", {
         minZoom: 13,
         maxZoom: 25,
         maxNativeZoom: 21,
-        bounds: [[-21.7685, -43.3375], [-21.7580, -43.3230]],
-        attribution: "Ortofoto Parque Burnier · Voo Drone HD (PCRA)"
+        bounds: [[-21.7710, -43.3400], [-21.7550, -43.3200]],
+        attribution: "Ortofoto Parque Burnier · Voo Drone HD (PCRA)",
+        zIndex: 2
       })
     ]),
     "google-hybrid": L.tileLayer("https://mt{s}.google.com/vt/lyrs=y&x={x}&y={y}&z={z}", {
       maxZoom: 25,
       maxNativeZoom: 22,
       subdomains: ["0", "1", "2", "3"],
-      attribution: "Google Maps & Maxar Satellite"
+      attribution: "Google Maps & Maxar Satellite",
+      zIndex: 1
     }),
     "google-satellite": L.tileLayer("https://mt{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}", {
       maxZoom: 25,
       maxNativeZoom: 22,
       subdomains: ["0", "1", "2", "3"],
-      attribution: "Google Maps Satellite"
+      attribution: "Google Maps Satellite",
+      zIndex: 1
     }),
     "esri-satellite": L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}", {
       maxZoom: 25,
       maxNativeZoom: 19,
-      attribution: "Esri / Maxar World Imagery"
+      attribution: "Esri / Maxar World Imagery",
+      zIndex: 1
     }),
     "google-streets": L.tileLayer("https://mt{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}", {
       maxZoom: 25,
       maxNativeZoom: 22,
       subdomains: ["0", "1", "2", "3"],
-      attribution: "Google Maps"
+      attribution: "Google Maps",
+      zIndex: 1
     }),
     "osm": L.tileLayer("https://{s}.tile.openstreetmap.fr/osmfr/{z}/{x}/{y}.png", {
       maxZoom: 25,
       maxNativeZoom: 19,
       subdomains: ["a", "b", "c"],
-      attribution: "&copy; <a href='https://www.openstreetmap.org/copyright' target='_blank'>OpenStreetMap</a> contributors"
+      attribution: "&copy; <a href='https://www.openstreetmap.org/copyright' target='_blank'>OpenStreetMap</a> contributors",
+      zIndex: 1
     }),
     "carto-voyager": L.tileLayer("https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png", {
       maxZoom: 25,
       maxNativeZoom: 20,
       subdomains: "abcd",
-      attribution: "&copy; <a href='https://www.openstreetmap.org/copyright' target='_blank'>OpenStreetMap</a>, &copy; <a href='https://carto.com/attributions' target='_blank'>CARTO</a>"
+      attribution: "&copy; <a href='https://www.openstreetmap.org/copyright' target='_blank'>OpenStreetMap</a>, &copy; <a href='https://carto.com/attributions' target='_blank'>CARTO</a>",
+      zIndex: 1
     })
   };
 
@@ -43199,6 +43211,10 @@ window.PCRA_GLOBAL_ADJUSTMENTS = window.PCRA_GLOBAL_ADJUSTMENTS || {};
     if (!data) return;
 
     const isLayerChecked = function (key) {
+      if (key && key.startsWith("percepcao_")) {
+        const partChk = document.getElementById("toggle-mapeamento-participativo");
+        return partChk ? partChk.checked : true;
+      }
       const chk = document.querySelector('.layer-toggle-checkbox[data-layer="' + key + '"]');
       return chk ? chk.checked : false;
     };
@@ -43793,8 +43809,9 @@ window.PCRA_GLOBAL_ADJUSTMENTS = window.PCRA_GLOBAL_ADJUSTMENTS || {};
       maxZoom: 25,
       maxNativeZoom: 21,
       opacity: 0.85,
-      bounds: [[-21.7685, -43.3375], [-21.7580, -43.3230]],
-      attribution: "Ortofoto Parque Burnier · Voo Drone HD (PCRA)"
+      bounds: [[-21.7710, -43.3400], [-21.7550, -43.3200]],
+      attribution: "Ortofoto Parque Burnier · Voo Drone HD (PCRA)",
+      zIndex: 5
     });
     if (isLayerChecked("ortofoto_overlay")) overlayLayers.ortofoto_overlay.addTo(map);
 
@@ -43804,8 +43821,9 @@ window.PCRA_GLOBAL_ADJUSTMENTS = window.PCRA_GLOBAL_ADJUSTMENTS || {};
       maxZoom: 25,
       maxNativeZoom: 20,
       opacity: 0.80,
-      bounds: [[-21.7655, -43.3365], [-21.7588, -43.3250]],
-      attribution: "Declividade (Classes % - 0.50m) · ADES HIS Parque Burnier"
+      bounds: [[-21.7670, -43.3380], [-21.7570, -43.3230]],
+      attribution: "Declividade (Classes % - 0.50m) · ADES HIS Parque Burnier",
+      zIndex: 6
     });
     if (isLayerChecked("declividade_overlay")) overlayLayers.declividade_overlay.addTo(map);
   }
@@ -45433,7 +45451,17 @@ window.PCRA_GLOBAL_ADJUSTMENTS = window.PCRA_GLOBAL_ADJUSTMENTS || {};
         if (basemaps[key]) {
           map.removeLayer(activeBasemapLayer);
           activeBasemapLayer = basemaps[key].addTo(map);
-          activeBasemapLayer.bringToBack();
+          if (activeBasemapLayer.eachLayer) {
+            const sublayers = activeBasemapLayer.getLayers();
+            if (sublayers.length >= 2) {
+              if (sublayers[0].bringToBack) sublayers[0].bringToBack();
+              if (sublayers[1].bringToFront) sublayers[1].bringToFront();
+            } else if (activeBasemapLayer.bringToBack) {
+              activeBasemapLayer.bringToBack();
+            }
+          } else if (activeBasemapLayer.bringToBack) {
+            activeBasemapLayer.bringToBack();
+          }
           els.basemapBtns.forEach(function(b) { b.classList.toggle("active", b === btn); });
         }
       });
