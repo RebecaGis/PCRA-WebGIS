@@ -277,6 +277,232 @@
       return chk ? chk.checked : false;
     };
 
+    // ==========================================================
+    // 👥 GRUPO MAPEAMENTO PARTICIPATIVO (OFICINA COMUNITÁRIA)
+    // ==========================================================
+    
+    // 1. Símbolos Participativos (59 pontos em 9 categorias)
+    if (data.percepcao_simbolos) {
+      overlayLayers.percepcao_simbolos = L.geoJSON(data.percepcao_simbolos, {
+        pointToLayer: function (feat, latlng) {
+          const p = feat.properties || {};
+          const cat = p.categoria || "outros";
+          const iconSrc = (window.PCRA_PERCEPCAO_ICONS && window.PCRA_PERCEPCAO_ICONS[cat]) || ("./icones/" + (p.icone || "outros.png"));
+          
+          return L.marker(latlng, {
+            icon: L.divIcon({
+              html: "<div class='percepcao-marker' style='border-color:" + p.cor + ";' title='" + p.categoria_nome + ": " + p.descricao + "'>" +
+                    "<img src='" + iconSrc + "' alt='" + p.categoria_nome + "' class='percepcao-marker-img' onerror=\"this.onerror=null;this.src='./icones/" + (p.icone || "outros.png") + "';\">" +
+                    "</div>",
+              className: "percepcao-marker-icon",
+              iconSize: [32, 32],
+              iconAnchor: [16, 16],
+              popupAnchor: [0, -16]
+            })
+          });
+        },
+        onEachFeature: function (feat, layer) {
+          const p = feat.properties || {};
+          const cat = p.categoria || "outros";
+          const iconSrc = (window.PCRA_PERCEPCAO_ICONS && window.PCRA_PERCEPCAO_ICONS[cat]) || ("./icones/" + (p.icone || "outros.png"));
+
+          layer.bindTooltip("<strong>" + p.emoji + " " + p.categoria_nome + "</strong><br>" + p.descricao, {
+            direction: "top",
+            className: "custom-area-tooltip"
+          });
+
+          layer.bindPopup(
+            "<div class='popup-custom-card'>" +
+              "<div style='display:flex;align-items:center;justify-content:space-between;gap:6px;margin-bottom:6px;padding-right:20px;'>" +
+                "<span style='font-size:0.68rem;font-weight:700;color:" + p.cor + ";background:" + p.cor + "18;border:1px solid " + p.cor + "40;padding:2px 8px;border-radius:999px;text-transform:uppercase;'>Mapeamento Participativo</span>" +
+                "<span style='font-size:0.72rem;font-weight:800;color:" + p.cor + ";background:" + p.cor + "20;padding:1px 6px;border-radius:4px;'>#" + p.id + "</span>" +
+              "</div>" +
+              "<div style='display:flex;align-items:center;gap:8px;margin-bottom:6px;'>" +
+                "<img src='" + iconSrc + "' style='width:34px;height:34px;object-fit:contain;' onerror=\"this.onerror=null;this.src='./icones/" + (p.icone || "outros.png") + "';\">" +
+                "<div class='popup-custom-header' style='color:" + p.cor + ";font-size:1.02rem;margin:0;'>" +
+                  p.categoria_nome +
+                "</div>" +
+              "</div>" +
+              "<div class='popup-custom-addr' style='font-size:0.80rem;font-weight:600;color:var(--forest-dark);margin-bottom:6px;line-height:1.35;'>" +
+                "📝 \"" + p.descricao + "\"" +
+              "</div>" +
+              "<div style='font-size:0.75rem;color:var(--text-muted);border-top:1px solid var(--line);padding-top:6px;line-height:1.45;'>" +
+                "<strong>Método:</strong> " + p.metodo + "<br>" +
+                "<strong>Localização:</strong> " + p.lat.toFixed(5) + ", " + p.lng.toFixed(5) + "<br>" +
+                "<strong>Fonte:</strong> " + p.fonte +
+              "</div>" +
+            "</div>", { maxWidth: 320 }
+          );
+        }
+      });
+      if (isLayerChecked("percepcao_simbolos")) overlayLayers.percepcao_simbolos.addTo(map);
+    }
+
+    // 2. Anotações Comunitárias (31 pontos textuais)
+    if (data.percepcao_anotacoes) {
+      overlayLayers.percepcao_anotacoes = L.geoJSON(data.percepcao_anotacoes, {
+        pointToLayer: function (feat, latlng) {
+          const p = feat.properties || {};
+          return L.marker(latlng, {
+            icon: L.divIcon({
+              html: "<div class='percepcao-anotacao-pin' title='" + p.texto + "'>" +
+                    "<span class='anotacao-badge'>💬</span>" +
+                    "<span class='anotacao-text'>" + p.texto + "</span>" +
+                    "</div>",
+              className: "percepcao-anotacao-icon",
+              iconSize: [120, 24],
+              iconAnchor: [12, 12],
+              popupAnchor: [0, -12]
+            })
+          });
+        },
+        onEachFeature: function (feat, layer) {
+          const p = feat.properties || {};
+          layer.bindTooltip("<strong>💬 Relato Comunitário:</strong><br>" + p.texto, {
+            direction: "top",
+            className: "custom-area-tooltip"
+          });
+
+          layer.bindPopup(
+            "<div class='popup-custom-card'>" +
+              "<div style='display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;padding-right:20px;'>" +
+                "<span style='font-size:0.68rem;font-weight:700;color:#166534;background:#dcfce7;border:1px solid #86efac;padding:2px 8px;border-radius:999px;text-transform:uppercase;'>Relato Comunitário</span>" +
+                "<span style='font-size:0.72rem;font-weight:800;color:#166534;'>#" + p.id + "</span>" +
+              "</div>" +
+              "<div class='popup-custom-header' style='color:#14532d;font-size:0.98rem;margin-bottom:4px;'>" +
+                "💬 " + p.texto +
+              "</div>" +
+              "<div style='font-size:0.75rem;color:var(--text-muted);border-top:1px solid var(--line);padding-top:6px;margin-top:6px;line-height:1.45;'>" +
+                "<strong>Tipo:</strong> Anotação transcrita do mapa participativo<br>" +
+                "<strong>Coordenadas:</strong> " + p.lat.toFixed(5) + ", " + p.lng.toFixed(5) + "<br>" +
+                "<strong>Fonte:</strong> " + p.fonte +
+              "</div>" +
+            "</div>", { maxWidth: 300 }
+          );
+        }
+      });
+      if (isLayerChecked("percepcao_anotacoes")) overlayLayers.percepcao_anotacoes.addTo(map);
+    }
+
+    // 3. Caminhos e Escadões (9 linhas)
+    if (data.percepcao_caminhos) {
+      overlayLayers.percepcao_caminhos = L.geoJSON(data.percepcao_caminhos, {
+        style: function (feat) {
+          const p = feat.properties || {};
+          const cat = p.categoria;
+          if (cat === "cyan") {
+            return { color: "#00abe7", weight: 3.5, dashArray: "6, 4", opacity: 0.95 };
+          } else if (cat === "brown") {
+            return { color: "#723f0e", weight: 4.0, dashArray: "3, 3", opacity: 0.95 };
+          } else {
+            return { color: "#1e293b", weight: 2.8, opacity: 0.9 };
+          }
+        },
+        onEachFeature: function (feat, layer) {
+          const p = feat.properties || {};
+          const iconEmoji = p.categoria === "cyan" ? "🌊" : (p.categoria === "brown" ? "🪜" : "〰️");
+
+          layer.bindTooltip("<strong>" + iconEmoji + " " + p.tipo_label + "</strong><br>Extensão: " + (p.extensao_m ? p.extensao_m.toLocaleString('pt-BR') + " m" : "—"), {
+            direction: "center",
+            className: "custom-area-tooltip"
+          });
+
+          layer.bindPopup(
+            "<div class='popup-custom-card'>" +
+              "<div style='display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;padding-right:20px;'>" +
+                "<span style='font-size:0.68rem;font-weight:700;color:" + p.cor_hex + ";background:" + p.cor_hex + "18;border:1px solid " + p.cor_hex + "40;padding:2px 8px;border-radius:999px;text-transform:uppercase;'>" + p.tipo_label + "</span>" +
+                "<span style='font-size:0.72rem;font-weight:800;color:" + p.cor_hex + ";'>#" + p.id + "</span>" +
+              "</div>" +
+              "<div class='popup-custom-header' style='color:" + p.cor_hex + ";font-size:1.02rem;margin-bottom:4px;'>" +
+                iconEmoji + " " + p.descricao +
+              "</div>" +
+              "<div style='font-size:0.75rem;color:var(--text-muted);border-top:1px solid var(--line);padding-top:6px;margin-top:6px;line-height:1.45;'>" +
+                "<strong>Extensão Estimada:</strong> " + (p.extensao_m ? p.extensao_m.toLocaleString('pt-BR') + " metros" : "—") + "<br>" +
+                "<strong>Função:</strong> " + (p.categoria === "cyan" ? "Escoamento e fluxo de água pluvial na encosta" : (p.categoria === "brown" ? "Acesso de pedestres / Escadão comunitário" : "Traçado de circulação local")) + "<br>" +
+                "<strong>Fonte:</strong> " + p.fonte +
+              "</div>" +
+            "</div>", { maxWidth: 300 }
+          );
+        }
+      });
+      if (isLayerChecked("percepcao_caminhos")) overlayLayers.percepcao_caminhos.addTo(map);
+    }
+
+    // 4. Áreas Percebidas (9 polígonos)
+    if (data.percepcao_areas) {
+      overlayLayers.percepcao_areas = L.geoJSON(data.percepcao_areas, {
+        style: function (feat) {
+          const p = feat.properties || {};
+          return {
+            color: p.cor_hex || "#266a00",
+            weight: 2.8,
+            fillColor: p.fill_hex || "#266a00",
+            fillOpacity: p.fill_opacity || 0.35
+          };
+        },
+        onEachFeature: function (feat, layer) {
+          const p = feat.properties || {};
+          layer.bindTooltip("<strong>🗺️ " + p.nome + "</strong><br>Área: " + (p.area_m2 ? p.area_m2.toLocaleString('pt-BR') + " m²" : "—"), {
+            direction: "center",
+            className: "custom-area-tooltip"
+          });
+
+          layer.bindPopup(
+            "<div class='popup-custom-card'>" +
+              "<div style='display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;padding-right:20px;'>" +
+                "<span style='font-size:0.68rem;font-weight:700;color:" + p.cor_hex + ";background:" + p.cor_hex + "18;border:1px solid " + p.cor_hex + "40;padding:2px 8px;border-radius:999px;text-transform:uppercase;'>Área Percebida</span>" +
+                "<span style='font-size:0.72rem;font-weight:800;color:" + p.cor_hex + ";'>#" + p.id + "</span>" +
+              "</div>" +
+              "<div class='popup-custom-header' style='color:" + p.cor_hex + ";font-size:1.02rem;margin-bottom:4px;'>" +
+                "🗺️ " + p.nome +
+              "</div>" +
+              "<div class='popup-custom-addr' style='margin-bottom:6px;'>Tipologia: <strong>" + p.tipo + "</strong></div>" +
+              "<div style='font-size:0.75rem;color:var(--text-muted);border-top:1px solid var(--line);padding-top:6px;margin-top:6px;line-height:1.55;'>" +
+                "<strong>📐 Área Mapeada:</strong> <strong>" + (p.area_m2 ? p.area_m2.toLocaleString('pt-BR') + " m² (" + (p.area_ha ? p.area_ha.toFixed(2) : (p.area_m2/10000).toFixed(2)) + " ha)" : "—") + "</strong><br>" +
+                "<strong>Perímetro:</strong> " + (p.perimetro_m ? p.perimetro_m.toLocaleString('pt-BR') + " m" : "—") + "<br>" +
+                "<strong>Fonte:</strong> " + p.fonte +
+              "</div>" +
+            "</div>", { maxWidth: 330 }
+          );
+        }
+      });
+      if (isLayerChecked("percepcao_areas")) overlayLayers.percepcao_areas.addTo(map);
+    }
+
+    // 5. Limite Participativo (1 polígono)
+    if (data.percepcao_limite) {
+      overlayLayers.percepcao_limite = L.geoJSON(data.percepcao_limite, {
+        style: {
+          color: "#15803d",
+          weight: 2.8,
+          dashArray: "8, 5",
+          fillColor: "#77ff5c",
+          fillOpacity: 0.10
+        },
+        onEachFeature: function (feat, layer) {
+          const p = feat.properties || {};
+          layer.bindTooltip("<strong>⭕ " + p.nome + "</strong>", {
+            direction: "center",
+            className: "custom-area-tooltip"
+          });
+
+          layer.bindPopup(
+            "<div class='popup-custom-card'>" +
+              "<div class='popup-custom-header' style='color:#15803d;font-size:1.02rem;margin-bottom:4px;'>" +
+                "⭕ " + p.nome +
+              "</div>" +
+              "<div style='font-size:0.75rem;color:var(--text-muted);border-top:1px solid var(--line);padding-top:6px;margin-top:6px;line-height:1.45;'>" +
+                "<strong>Extensão Perimetral:</strong> " + (p.extensao_m ? p.extensao_m.toLocaleString('pt-BR') + " metros" : "—") + "<br>" +
+                "<strong>Finalidade:</strong> Delimitação do território de percepção de riscos construído pela comunidade.<br>" +
+                "<strong>Fonte:</strong> " + p.fonte +
+              "</div>" +
+            "</div>", { maxWidth: 320 }
+          );
+        }
+      });
+      if (isLayerChecked("percepcao_limite")) overlayLayers.percepcao_limite.addTo(map);
+    }
+
     if (data.obras_contencao) {
       overlayLayers.obras_contencao = L.geoJSON(data.obras_contencao, {
         style: function (feat) {
@@ -1546,6 +1772,21 @@
       if (allLayers.equip_instituicoes_religiosas && allLayers.equip_instituicoes_religiosas.features) featList.push.apply(featList, allLayers.equip_instituicoes_religiosas.features);
       geojson = { type: "FeatureCollection", name: "equipamentos_comunitarios", features: featList };
       fileName = "pcra_equipamentos_comunitarios";
+    } else if (layerKey === "percepcao_simbolos") {
+      geojson = allLayers.percepcao_simbolos;
+      fileName = "percepcao_simbolos_participativos";
+    } else if (layerKey === "percepcao_anotacoes") {
+      geojson = allLayers.percepcao_anotacoes;
+      fileName = "percepcao_anotacoes_comunidade";
+    } else if (layerKey === "percepcao_caminhos") {
+      geojson = allLayers.percepcao_caminhos;
+      fileName = "percepcao_caminhos_e_escadoes";
+    } else if (layerKey === "percepcao_areas") {
+      geojson = allLayers.percepcao_areas;
+      fileName = "percepcao_areas_risco";
+    } else if (layerKey === "percepcao_limite") {
+      geojson = allLayers.percepcao_limite;
+      fileName = "percepcao_limite_participativo";
     } else if (layerKey === "obras_contencao") {
       geojson = allLayers.obras_contencao;
       fileName = "obras_contencao_secretaria_de_obras";
@@ -1703,7 +1944,28 @@
         folder.file("11_equipamentos_comunitarios.geojson", JSON.stringify(equipGeoJSON, null, 2));
         folder.file("11_equipamentos_comunitarios.kml", convertGeoJSONToKML(equipGeoJSON, "Equipamentos Comunitários"));
       }
-      // 12. README
+            // 12. Mapeamento Participativo
+      if (allLayers.percepcao_simbolos) {
+        folder.file("12_percepcao_simbolos_participativos.geojson", JSON.stringify(allLayers.percepcao_simbolos, null, 2));
+        folder.file("12_percepcao_simbolos_participativos.kml", convertGeoJSONToKML(allLayers.percepcao_simbolos, "Símbolos Participativos"));
+      }
+      if (allLayers.percepcao_anotacoes) {
+        folder.file("13_percepcao_anotacoes_comunidade.geojson", JSON.stringify(allLayers.percepcao_anotacoes, null, 2));
+        folder.file("13_percepcao_anotacoes_comunidade.kml", convertGeoJSONToKML(allLayers.percepcao_anotacoes, "Anotações da Comunidade"));
+      }
+      if (allLayers.percepcao_caminhos) {
+        folder.file("14_percepcao_caminhos_e_escadoes.geojson", JSON.stringify(allLayers.percepcao_caminhos, null, 2));
+        folder.file("14_percepcao_caminhos_e_escadoes.kml", convertGeoJSONToKML(allLayers.percepcao_caminhos, "Caminhos e Escadões"));
+      }
+      if (allLayers.percepcao_areas) {
+        folder.file("15_percepcao_areas_risco.geojson", JSON.stringify(allLayers.percepcao_areas, null, 2));
+        folder.file("15_percepcao_areas_risco.kml", convertGeoJSONToKML(allLayers.percepcao_areas, "Áreas Percebidas"));
+      }
+      if (allLayers.percepcao_limite) {
+        folder.file("16_percepcao_limite_desenhado.geojson", JSON.stringify(allLayers.percepcao_limite, null, 2));
+        folder.file("16_percepcao_limite_desenhado.kml", convertGeoJSONToKML(allLayers.percepcao_limite, "Limite Desenhado"));
+      }
+      // 17. README
       const readme = "=========================================================\n" +
         "PLANO COMUNITÁRIO DE REDUÇÃO DE RISCOS (PCRA) — PARQUE BURNIER\n" +
         "PACOTE DE DADOS GEOESPACIAIS VETORIAIS (SIG / WEBGIS)\n" +
@@ -4144,7 +4406,95 @@
       }
     }
 
+    
+    // ==========================================================
+    // 👥 MAPEAMENTO PARTICIPATIVO UI HANDLERS
+    // ==========================================================
+    function setupMapeamentoParticipativoUI() {
+      const groupChk = document.getElementById("toggle-group-mapeamento-participativo");
+      const arrowBtn = document.getElementById("btn-toggle-mapeamento-sublayers");
+      const sublayersBox = document.getElementById("mapeamento-participativo-sublayers");
+      const subCheckboxes = document.querySelectorAll(".sublayer-chk-part");
+      
+      const openModalBtn = document.getElementById("btn-open-legenda-participativa");
+      const modal = document.getElementById("modal-legenda-participativa");
+      const closeModalBtn = document.getElementById("modal-legenda-participativa-close");
+
+      // Master Checkbox: Toggle all 5 sublayers
+      if (groupChk) {
+        groupChk.addEventListener("change", function () {
+          const isChecked = groupChk.checked;
+          subCheckboxes.forEach(function (chk) {
+            chk.checked = isChecked;
+            const lKey = chk.dataset.layer;
+            if (overlayLayers[lKey]) {
+              if (isChecked) {
+                if (!map.hasLayer(overlayLayers[lKey])) overlayLayers[lKey].addTo(map);
+              } else {
+                if (map.hasLayer(overlayLayers[lKey])) map.removeLayer(overlayLayers[lKey]);
+              }
+            }
+          });
+        });
+      }
+
+      // Arrow Toggle: Collapse / Expand sublayers
+      if (arrowBtn && sublayersBox) {
+        arrowBtn.addEventListener("click", function (e) {
+          e.stopPropagation();
+          const isHidden = sublayersBox.style.display === "none";
+          sublayersBox.style.display = isHidden ? "flex" : "none";
+          arrowBtn.textContent = isHidden ? "▾" : "▸";
+        });
+      }
+
+      // Update master checkbox if individual sublayers change
+      subCheckboxes.forEach(function (chk) {
+        chk.addEventListener("change", function () {
+          const anyChecked = Array.from(subCheckboxes).some(function (c) { return c.checked; });
+          if (groupChk) groupChk.checked = anyChecked;
+        });
+      });
+
+      // Legenda Modal
+      if (openModalBtn && modal) {
+        openModalBtn.addEventListener("click", function (e) {
+          e.preventDefault();
+          e.stopPropagation();
+          // Populate base64 icons if available
+          if (window.PCRA_PERCEPCAO_ICONS) {
+            modal.querySelectorAll(".modal-leg-icon-img").forEach(function (img) {
+              const cat = img.dataset.iconCat;
+              if (cat && window.PCRA_PERCEPCAO_ICONS[cat]) {
+                img.src = window.PCRA_PERCEPCAO_ICONS[cat];
+              }
+            });
+          }
+          modal.classList.add("open");
+        });
+      }
+
+      if (closeModalBtn && modal) {
+        closeModalBtn.addEventListener("click", function () {
+          modal.classList.remove("open");
+        });
+      }
+
+      if (modal) {
+        modal.addEventListener("click", function (e) {
+          if (e.target === modal) modal.classList.remove("open");
+        });
+      }
+
+      window.addEventListener("keydown", function (e) {
+        if (e.key === "Escape" && modal && modal.classList.contains("open")) {
+          modal.classList.remove("open");
+        }
+      });
+    }
+
     function init() {
+      setupMapeamentoParticipativoUI();
       initLogos();
       initReferenceLayers();
       setupEventListeners();

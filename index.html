@@ -460,6 +460,49 @@
               </div>
             </div>
 
+                        <!-- Grupo Mapeamento Participativo -->
+            <div class="layer-group-box group-mapeamento-participativo">
+              <div class="layer-group-header">
+                <label class="layer-item" style="font-weight:700;color:var(--forest-dark);margin:0;cursor:pointer;">
+                  <input type="checkbox" id="toggle-group-mapeamento-participativo" checked>
+                  <span style="display:inline-flex;align-items:center;gap:5px;">👥 <strong>Mapeamento Participativo</strong></span>
+                </label>
+                <button type="button" id="btn-toggle-mapeamento-sublayers" class="group-toggle-arrow-btn" title="Expandir/Recolher subcamadas">▾</button>
+              </div>
+              
+              <div id="mapeamento-participativo-sublayers" class="layer-group-sublayers">
+                <label class="layer-item sublayer-item">
+                  <input type="checkbox" class="layer-toggle-checkbox sublayer-chk-part" data-layer="percepcao_simbolos" checked>
+                  <span class="layer-symbol-emoji">🎨</span>
+                  <span>Símbolos Participativos (59)</span>
+                </label>
+                <label class="layer-item sublayer-item">
+                  <input type="checkbox" class="layer-toggle-checkbox sublayer-chk-part" data-layer="percepcao_anotacoes" checked>
+                  <span class="layer-symbol-emoji">💬</span>
+                  <span>Anotações Comunitárias (31)</span>
+                </label>
+                <label class="layer-item sublayer-item">
+                  <input type="checkbox" class="layer-toggle-checkbox sublayer-chk-part" data-layer="percepcao_caminhos" checked>
+                  <span class="layer-symbol-line" style="border-color:#00abe7;"></span>
+                  <span>Caminhos e Escadões (9)</span>
+                </label>
+                <label class="layer-item sublayer-item">
+                  <input type="checkbox" class="layer-toggle-checkbox sublayer-chk-part" data-layer="percepcao_areas" checked>
+                  <span class="layer-symbol-polygon" style="border-color:#266a00;background:rgba(38,106,0,0.35);"></span>
+                  <span>Áreas Percebidas (9)</span>
+                </label>
+                <label class="layer-item sublayer-item">
+                  <input type="checkbox" class="layer-toggle-checkbox sublayer-chk-part" data-layer="percepcao_limite" checked>
+                  <span class="layer-symbol-polygon-dashed" style="border-color:#15803d;background:rgba(119,255,92,0.20);"></span>
+                  <span>Limite Participativo</span>
+                </label>
+
+                <button type="button" id="btn-open-legenda-participativa" class="btn-legenda-participativa" title="Abrir a Legenda Oficial do Mapeamento Participativo">
+                  📖 Ver Legenda dos Ícones
+                </button>
+              </div>
+            </div>
+
             <label class="layer-item"><input type="checkbox" class="layer-toggle-checkbox" data-layer="obras_contencao" checked> <span class="layer-symbol-polygon" style="border-color:#0284c7;background:rgba(2,132,199,0.30);"></span> 🚧 Obras de Contenção · Sec. de Obras (4 polígonos)</label>
             <label class="layer-item"><input type="checkbox" class="layer-toggle-checkbox" data-layer="area_atuacao_pcra"> <span class="layer-symbol-polygon" style="border-color:#16a34a;background:rgba(22,163,74,0.25);"></span> 📍 Área de Atuação PCRA (Burnier)</label>
             <label class="layer-item"><input type="checkbox" class="layer-toggle-checkbox" data-layer="areas_prioritarias"> <span class="layer-symbol-polygon" style="border-color:#f43f5e;background:rgba(244,63,94,0.30);"></span> 🎯 Áreas Prioritárias (Plano de Ação)</label>
@@ -610,6 +653,86 @@
         </div>
 
         <div class="layers-download-grid">
+          <!-- Mapeamento Participativo - Símbolos -->
+          <div class="layer-dl-row">
+            <div class="layer-dl-info">
+              <span class="layer-dl-badge" style="background:#7c3aed;">🎨</span>
+              <div>
+                <strong>Símbolos Participativos</strong>
+                <span>59 pontos de percepção comunitária em 9 categorias</span>
+              </div>
+            </div>
+            <div class="layer-dl-actions">
+              <button class="btn-dl-fmt" data-dl-layer="percepcao_simbolos" data-dl-fmt="geojson">GeoJSON</button>
+              <button class="btn-dl-fmt" data-dl-layer="percepcao_simbolos" data-dl-fmt="kml">KML</button>
+              <button class="btn-dl-fmt" data-dl-layer="percepcao_simbolos" data-dl-fmt="csv">CSV</button>
+            </div>
+          </div>
+
+          <!-- Mapeamento Participativo - Anotações -->
+          <div class="layer-dl-row">
+            <div class="layer-dl-info">
+              <span class="layer-dl-badge" style="background:#16a34a;">💬</span>
+              <div>
+                <strong>Anotações Comunitárias</strong>
+                <span>31 notas textuais georreferenciadas da oficina</span>
+              </div>
+            </div>
+            <div class="layer-dl-actions">
+              <button class="btn-dl-fmt" data-dl-layer="percepcao_anotacoes" data-dl-fmt="geojson">GeoJSON</button>
+              <button class="btn-dl-fmt" data-dl-layer="percepcao_anotacoes" data-dl-fmt="kml">KML</button>
+              <button class="btn-dl-fmt" data-dl-layer="percepcao_anotacoes" data-dl-fmt="csv">CSV</button>
+            </div>
+          </div>
+
+          <!-- Mapeamento Participativo - Caminhos e Escadões -->
+          <div class="layer-dl-row">
+            <div class="layer-dl-info">
+              <span class="layer-dl-badge" style="background:#00abe7;">🌊</span>
+              <div>
+                <strong>Caminhos e Escadões</strong>
+                <span>9 linhas (enxurradas, escadões e trajetos)</span>
+              </div>
+            </div>
+            <div class="layer-dl-actions">
+              <button class="btn-dl-fmt" data-dl-layer="percepcao_caminhos" data-dl-fmt="geojson">GeoJSON</button>
+              <button class="btn-dl-fmt" data-dl-layer="percepcao_caminhos" data-dl-fmt="kml">KML</button>
+              <button class="btn-dl-fmt" data-dl-layer="percepcao_caminhos" data-dl-fmt="csv">CSV</button>
+            </div>
+          </div>
+
+          <!-- Mapeamento Participativo - Áreas Percebidas -->
+          <div class="layer-dl-row">
+            <div class="layer-dl-info">
+              <span class="layer-dl-badge" style="background:#266a00;">🗺️</span>
+              <div>
+                <strong>Áreas Percebidas</strong>
+                <span>9 polígonos mapeados na oficina participativa</span>
+              </div>
+            </div>
+            <div class="layer-dl-actions">
+              <button class="btn-dl-fmt" data-dl-layer="percepcao_areas" data-dl-fmt="geojson">GeoJSON</button>
+              <button class="btn-dl-fmt" data-dl-layer="percepcao_areas" data-dl-fmt="kml">KML</button>
+              <button class="btn-dl-fmt" data-dl-layer="percepcao_areas" data-dl-fmt="csv">CSV</button>
+            </div>
+          </div>
+
+          <!-- Mapeamento Participativo - Limite Desenhado -->
+          <div class="layer-dl-row">
+            <div class="layer-dl-info">
+              <span class="layer-dl-badge" style="background:#15803d;">⭕</span>
+              <div>
+                <strong>Limite Participativo</strong>
+                <span>Perímetro desenhado na oficina comunitária</span>
+              </div>
+            </div>
+            <div class="layer-dl-actions">
+              <button class="btn-dl-fmt" data-dl-layer="percepcao_limite" data-dl-fmt="geojson">GeoJSON</button>
+              <button class="btn-dl-fmt" data-dl-layer="percepcao_limite" data-dl-fmt="kml">KML</button>
+              <button class="btn-dl-fmt" data-dl-layer="percepcao_limite" data-dl-fmt="csv">CSV</button>
+            </div>
+          </div>
+
           <!-- Obras de Contenção -->
           <div class="layer-dl-row">
             <div class="layer-dl-info">
@@ -989,6 +1112,104 @@
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
             <span id="admin-copy-coords-btn-text">Copiar Coordenadas</span>
           </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+    <!-- Modal: Legenda Oficial do Mapeamento Participativo -->
+  <div id="modal-legenda-participativa" class="modal-lightbox-backdrop">
+    <div class="export-dialog-card" style="max-width: 680px; width: 95vw;">
+      <div class="export-dialog-header">
+        <div style="display:flex;align-items:center;gap:8px;">
+          <span style="font-size:1.2rem;">🤝</span>
+          <div>
+            <h3 style="margin:0; font-size:1.05rem;">Mapeamento Participativo · Legenda Oficial</h3>
+            <p style="margin:2px 0 0 0; font-size:0.75rem; color:var(--muted);">Simbologia construída nas oficinas comunitárias de percepção de riscos</p>
+          </div>
+        </div>
+        <button id="modal-legenda-participativa-close" class="modal-lightbox-close" style="position:static; font-size:1.1rem;" title="Fechar (Esc)">✕</button>
+      </div>
+
+      <div style="padding: 16px 20px; max-height: 75vh; overflow-y: auto;">
+        <!-- Two Columns Layout matching deliverable image -->
+        <div class="modal-legend-columns-grid">
+          <!-- Coluna 1: Ameaças -->
+          <div class="modal-legend-col">
+            <div class="modal-legend-col-title">LEGENDA - AMEAÇAS</div>
+            <div class="modal-legend-items-list">
+              <div class="modal-leg-item">
+                <img src="./icones/agua.png" class="modal-leg-icon-img" data-icon-cat="agua" alt="Água">
+                <span class="modal-leg-label">Água</span>
+              </div>
+              <div class="modal-leg-item">
+                <img src="./icones/terreno.png" class="modal-leg-icon-img" data-icon-cat="terreno" alt="Barranco/ Terreno">
+                <span class="modal-leg-label">Barranco/<br>Terreno</span>
+              </div>
+              <div class="modal-leg-item">
+                <img src="./icones/casa.png" class="modal-leg-icon-img" data-icon-cat="casa" alt="Casa/ Muro">
+                <span class="modal-leg-label">Casa/<br>Muro</span>
+              </div>
+              <div class="modal-leg-item">
+                <img src="./icones/vento.png" class="modal-leg-icon-img" data-icon-cat="vento" alt="Ventania">
+                <span class="modal-leg-label">Ventania</span>
+              </div>
+              <div class="modal-leg-item">
+                <img src="./icones/vegetacao.png" class="modal-leg-icon-img" data-icon-cat="vegetacao" alt="Vegetação">
+                <span class="modal-leg-label">Vegetação</span>
+              </div>
+              <div class="modal-leg-item">
+                <img src="./icones/fogo.png" class="modal-leg-icon-img" data-icon-cat="fogo" alt="Fogo/ Incêndio">
+                <span class="modal-leg-label">Fogo/<br>Incêndio</span>
+              </div>
+              <div class="modal-leg-item">
+                <div class="modal-leg-line-sample"></div>
+                <span class="modal-leg-label">Caminho<br>enxurrada</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Divisória Vertical -->
+          <div class="modal-legend-divider"></div>
+
+          <!-- Coluna 2: Proteção Coletiva -->
+          <div class="modal-legend-col">
+            <div class="modal-legend-col-title">LEGENDA - PROTEÇÃO COLETIVA</div>
+            <div class="modal-legend-items-list">
+              <div class="modal-leg-item">
+                <img src="./icones/pessoa.png" class="modal-leg-icon-img" data-icon-cat="pessoa" alt="Pessoas-chave">
+                <span class="modal-leg-label">Pessoas-chave</span>
+              </div>
+              <div class="modal-leg-item">
+                <img src="./icones/rota.png" class="modal-leg-icon-img" data-icon-cat="rota" alt="Rotas de fuga/ Caminhos">
+                <span class="modal-leg-label">Rotas de fuga/<br>Caminhos</span>
+              </div>
+              <div class="modal-leg-item">
+                <img src="./icones/apoio.png" class="modal-leg-icon-img" data-icon-cat="apoio" alt="Lugar de referência/ Acolhimento">
+                <span class="modal-leg-label">Lugar de referência/<br>Acolhimento</span>
+              </div>
+            </div>
+
+            <!-- Demais elementos vetoriais participativos -->
+            <div class="modal-legend-complementary">
+              <div class="modal-comp-item">
+                <span style="font-size:1.1rem;line-height:1;">💬</span>
+                <div><strong>Anotações Comunitárias (31)</strong><br><small style="color:var(--muted);">Notas e relatos dos moradores</small></div>
+              </div>
+              <div class="modal-comp-item">
+                <span class="layer-symbol-line" style="border-color:#723f0e;border-top-style:dashed;width:24px;border-width:3px;"></span>
+                <div><strong>Escadões & Trajetos (9)</strong><br><small style="color:var(--muted);">Acessos de pedestres e caminhos</small></div>
+              </div>
+              <div class="modal-comp-item">
+                <span class="layer-symbol-polygon" style="border-color:#266a00;background:rgba(38,106,0,0.35);width:18px;height:12px;"></span>
+                <div><strong>Áreas Percebidas (9)</strong><br><small style="color:var(--muted);">Polígonos temáticos de risco</small></div>
+              </div>
+              <div class="modal-comp-item">
+                <span class="layer-symbol-polygon-dashed" style="border-color:#15803d;background:rgba(119,255,92,0.20);width:18px;height:12px;"></span>
+                <div><strong>Limite Participativo</strong><br><small style="color:var(--muted);">Perímetro comunitário</small></div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>

@@ -3356,3 +3356,275 @@ html, body {
   background: rgba(0, 0, 0, 0.12) !important;
   color: #0f172a !important;
 }
+
+/* ==========================================================================
+   Grupo Mapeamento Participativo (Oficina Comunitária)
+   ========================================================================== */
+.group-mapeamento-participativo {
+  background: rgba(124, 58, 237, 0.04);
+  border: 1.5px solid rgba(124, 58, 237, 0.25);
+  border-radius: 8px;
+  padding: 6px 8px;
+  margin: 6px 0;
+}
+
+[data-theme="dark"] .group-mapeamento-participativo {
+  background: rgba(124, 58, 237, 0.12);
+  border-color: rgba(124, 58, 237, 0.4);
+}
+
+.layer-group-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 4px;
+}
+
+.group-toggle-arrow-btn {
+  background: transparent;
+  border: none;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #7c3aed;
+  cursor: pointer;
+  padding: 2px 5px;
+  border-radius: 4px;
+  transition: transform 0.15s ease;
+}
+
+.group-toggle-arrow-btn:hover {
+  background: rgba(124, 58, 237, 0.15);
+}
+
+.layer-group-sublayers {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 4px;
+  padding-top: 4px;
+  border-top: 1px dashed rgba(124, 58, 237, 0.2);
+  transition: all 0.2s ease;
+}
+
+.sublayer-item {
+  padding-left: 14px;
+  font-size: 0.74rem;
+}
+
+.btn-legenda-participativa {
+  margin-top: 5px;
+  width: 100%;
+  padding: 5px 8px;
+  background: #ffffff;
+  color: #6d28d9;
+  border: 1px solid rgba(124, 58, 237, 0.35);
+  border-radius: 6px;
+  font-size: 0.70rem;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  transition: all 0.15s ease;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.btn-legenda-participativa:hover {
+  background: #7c3aed;
+  color: #ffffff;
+  border-color: #6d28d9;
+}
+
+[data-theme="dark"] .btn-legenda-participativa {
+  background: rgba(124, 58, 237, 0.2);
+  color: #c4b5fd;
+  border-color: rgba(124, 58, 237, 0.45);
+}
+
+[data-theme="dark"] .btn-legenda-participativa:hover {
+  background: #7c3aed;
+  color: #ffffff;
+}
+
+/* Modal Legenda Participativa (2 Colunas Fiel aos Entregáveis) */
+.modal-legend-columns-grid {
+  display: flex;
+  gap: 16px;
+  align-items: stretch;
+}
+
+@media (max-width: 600px) {
+  .modal-legend-columns-grid {
+    flex-direction: column;
+    gap: 12px;
+  }
+}
+
+.modal-legend-col {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.modal-legend-col-title {
+  font-family: var(--font-display, sans-serif);
+  font-size: 0.84rem;
+  font-weight: 800;
+  color: #0f172a;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding-bottom: 4px;
+  border-bottom: 2px solid #0f172a;
+  margin: 0 0 6px 0;
+}
+
+[data-theme="dark"] .modal-legend-col-title {
+  color: #f1f5f9;
+  border-bottom-color: #4ade80;
+}
+
+.modal-legend-divider {
+  width: 2px;
+  background: #0f172a;
+  opacity: 0.8;
+  border-radius: 2px;
+}
+
+@media (max-width: 600px) {
+  .modal-legend-divider {
+    display: none;
+  }
+}
+
+.modal-legend-items-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.modal-leg-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.modal-leg-icon-img {
+  width: 44px;
+  height: 44px;
+  object-fit: contain;
+  border-radius: 6px;
+  background: #ffffff;
+  padding: 1px;
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+  flex-shrink: 0;
+}
+
+.modal-leg-label {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #0f172a;
+  line-height: 1.2;
+}
+
+[data-theme="dark"] .modal-leg-label {
+  color: #f8fafc;
+}
+
+.modal-leg-line-sample {
+  width: 44px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.modal-leg-line-sample::before {
+  content: "";
+  display: block;
+  width: 40px;
+  height: 8px;
+  background: #00abe7;
+  border-radius: 4px;
+  box-shadow: 0 1px 3px rgba(0, 171, 231, 0.4);
+}
+
+.modal-legend-complementary {
+  margin-top: 10px;
+  padding-top: 8px;
+  border-top: 1px dashed var(--line);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 0.74rem;
+}
+
+.modal-comp-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Square Sticker Map Markers */
+.percepcao-marker {
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #ffffff;
+  border: 1.5px solid rgba(0, 0, 0, 0.2);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  cursor: pointer;
+  padding: 1px;
+}
+
+.percepcao-marker:hover {
+  transform: scale(1.28);
+  box-shadow: 0 5px 12px rgba(0, 0, 0, 0.45);
+  z-index: 1000 !important;
+}
+
+.percepcao-marker-img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  border-radius: 4px;
+}
+
+.percepcao-anotacao-pin {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: rgba(255, 255, 255, 0.95);
+  border: 1.5px solid #16a34a;
+  border-radius: 12px;
+  padding: 2px 8px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+  white-space: nowrap;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #14532d;
+  cursor: pointer;
+  transition: transform 0.15s ease;
+}
+
+.percepcao-anotacao-pin:hover {
+  transform: scale(1.08);
+  background: #ffffff;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+  z-index: 1000 !important;
+}
+
+[data-theme="dark"] .percepcao-anotacao-pin {
+  background: rgba(20, 83, 45, 0.92);
+  border-color: #4ade80;
+  color: #f0fdf4;
+}
+
+.anotacao-badge { font-size: 0.8rem; }
+.anotacao-text { max-width: 180px; overflow: hidden; text-overflow: ellipsis; }
