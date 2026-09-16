@@ -4407,54 +4407,34 @@
     }
 
     
-    // ==========================================================
-    // 👥 MAPEAMENTO PARTICIPATIVO UI HANDLERS
+        // ==========================================================
+    // 👥 MAPEAMENTO PARTICIPATIVO UI HANDLERS (LINHA ÚNICA)
     // ==========================================================
     function setupMapeamentoParticipativoUI() {
-      const groupChk = document.getElementById("toggle-group-mapeamento-participativo");
-      const arrowBtn = document.getElementById("btn-toggle-mapeamento-sublayers");
-      const sublayersBox = document.getElementById("mapeamento-participativo-sublayers");
-      const subCheckboxes = document.querySelectorAll(".sublayer-chk-part");
-      
+      const toggleChk = document.getElementById("toggle-mapeamento-participativo") || document.getElementById("toggle-group-mapeamento-participativo");
       const openModalBtn = document.getElementById("btn-open-legenda-participativa");
       const modal = document.getElementById("modal-legenda-participativa");
       const closeModalBtn = document.getElementById("modal-legenda-participativa-close");
 
-      // Master Checkbox: Toggle all 5 sublayers
-      if (groupChk) {
-        groupChk.addEventListener("change", function () {
-          const isChecked = groupChk.checked;
-          subCheckboxes.forEach(function (chk) {
-            chk.checked = isChecked;
-            const lKey = chk.dataset.layer;
-            if (overlayLayers[lKey]) {
-              if (isChecked) {
-                if (!map.hasLayer(overlayLayers[lKey])) overlayLayers[lKey].addTo(map);
-              } else {
-                if (map.hasLayer(overlayLayers[lKey])) map.removeLayer(overlayLayers[lKey]);
-              }
+      const partLayersKeys = ["percepcao_simbolos", "percepcao_anotacoes", "percepcao_caminhos", "percepcao_areas", "percepcao_limite"];
+
+      function updateMapeamentoVisibility() {
+        if (!toggleChk) return;
+        const isChecked = toggleChk.checked;
+        partLayersKeys.forEach(function (k) {
+          if (overlayLayers[k]) {
+            if (isChecked) {
+              if (!map.hasLayer(overlayLayers[k])) overlayLayers[k].addTo(map);
+            } else {
+              if (map.hasLayer(overlayLayers[k])) map.removeLayer(overlayLayers[k]);
             }
-          });
+          }
         });
       }
 
-      // Arrow Toggle: Collapse / Expand sublayers
-      if (arrowBtn && sublayersBox) {
-        arrowBtn.addEventListener("click", function (e) {
-          e.stopPropagation();
-          const isHidden = sublayersBox.style.display === "none";
-          sublayersBox.style.display = isHidden ? "flex" : "none";
-          arrowBtn.textContent = isHidden ? "▾" : "▸";
-        });
+      if (toggleChk) {
+        toggleChk.addEventListener("change", updateMapeamentoVisibility);
       }
-
-      // Update master checkbox if individual sublayers change
-      subCheckboxes.forEach(function (chk) {
-        chk.addEventListener("change", function () {
-          const anyChecked = Array.from(subCheckboxes).some(function (c) { return c.checked; });
-          if (groupChk) groupChk.checked = anyChecked;
-        });
-      });
 
       // Legenda Modal
       if (openModalBtn && modal) {

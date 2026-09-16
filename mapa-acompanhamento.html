@@ -3661,6 +3661,48 @@ html, body {
 .anotacao-badge { font-size: 0.8rem; }
 .anotacao-text { max-width: 180px; overflow: hidden; text-overflow: ellipsis; }
 
+/* Camada Mapeamento Participativo Linha Única com Botão */
+.layer-mapeamento-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  background: rgba(124, 58, 237, 0.06);
+  border: 1.5px solid rgba(124, 58, 237, 0.25);
+  border-radius: 6px;
+  padding: 5px 8px;
+  margin: 4px 0;
+}
+
+[data-theme="dark"] .layer-mapeamento-row {
+  background: rgba(124, 58, 237, 0.15);
+  border-color: rgba(124, 58, 237, 0.4);
+}
+
+.btn-ver-legenda-pill {
+  background: #7c3aed;
+  color: #ffffff;
+  border: none;
+  border-radius: 4px;
+  padding: 3px 8px;
+  font-size: 0.68rem;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.15s ease;
+  box-shadow: 0 1px 3px rgba(124, 58, 237, 0.3);
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  flex-shrink: 0;
+}
+
+.btn-ver-legenda-pill:hover {
+  background: #6d28d9;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 6px rgba(124, 58, 237, 0.45);
+}
+
 </style>
 </head>
 <body>
@@ -4092,47 +4134,16 @@ html, body {
               </div>
             </div>
 
-                        <!-- Grupo Mapeamento Participativo -->
-            <div class="layer-group-box group-mapeamento-participativo">
-              <div class="layer-group-header">
-                <label class="layer-item" style="font-weight:700;color:var(--forest-dark);margin:0;cursor:pointer;">
-                  <input type="checkbox" id="toggle-group-mapeamento-participativo" checked>
-                  <span style="display:inline-flex;align-items:center;gap:5px;">👥 <strong>Mapeamento Participativo</strong></span>
-                </label>
-                <button type="button" id="btn-toggle-mapeamento-sublayers" class="group-toggle-arrow-btn" title="Expandir/Recolher subcamadas">▾</button>
-              </div>
-              
-              <div id="mapeamento-participativo-sublayers" class="layer-group-sublayers">
-                <label class="layer-item sublayer-item">
-                  <input type="checkbox" class="layer-toggle-checkbox sublayer-chk-part" data-layer="percepcao_simbolos" checked>
-                  <span class="layer-symbol-emoji">🎨</span>
-                  <span>Símbolos Participativos (59)</span>
-                </label>
-                <label class="layer-item sublayer-item">
-                  <input type="checkbox" class="layer-toggle-checkbox sublayer-chk-part" data-layer="percepcao_anotacoes" checked>
-                  <span class="layer-symbol-emoji">💬</span>
-                  <span>Anotações Comunitárias (31)</span>
-                </label>
-                <label class="layer-item sublayer-item">
-                  <input type="checkbox" class="layer-toggle-checkbox sublayer-chk-part" data-layer="percepcao_caminhos" checked>
-                  <span class="layer-symbol-line" style="border-color:#00abe7;"></span>
-                  <span>Caminhos e Escadões (9)</span>
-                </label>
-                <label class="layer-item sublayer-item">
-                  <input type="checkbox" class="layer-toggle-checkbox sublayer-chk-part" data-layer="percepcao_areas" checked>
-                  <span class="layer-symbol-polygon" style="border-color:#266a00;background:rgba(38,106,0,0.35);"></span>
-                  <span>Áreas Percebidas (9)</span>
-                </label>
-                <label class="layer-item sublayer-item">
-                  <input type="checkbox" class="layer-toggle-checkbox sublayer-chk-part" data-layer="percepcao_limite" checked>
-                  <span class="layer-symbol-polygon-dashed" style="border-color:#15803d;background:rgba(119,255,92,0.20);"></span>
-                  <span>Limite Participativo</span>
-                </label>
-
-                <button type="button" id="btn-open-legenda-participativa" class="btn-legenda-participativa" title="Abrir a Legenda Oficial do Mapeamento Participativo">
-                  📖 Ver Legenda dos Ícones
-                </button>
-              </div>
+                                    <!-- Camada Mapeamento Participativo com Botão de Legenda -->
+            <div class="layer-mapeamento-row">
+              <label class="layer-item" style="cursor:pointer;flex:1;margin:0;font-weight:700;color:var(--forest-dark);">
+                <input type="checkbox" id="toggle-mapeamento-participativo" class="layer-toggle-checkbox" checked>
+                <span class="layer-symbol-emoji">🤝</span>
+                <span>Mapeamento Participativo</span>
+              </label>
+              <button type="button" id="btn-open-legenda-participativa" class="btn-ver-legenda-pill" title="Visualizar a Legenda Oficial dos Ícones Comunitários">
+                📖 Ver legenda dos ícones
+              </button>
             </div>
 
             <label class="layer-item"><input type="checkbox" class="layer-toggle-checkbox" data-layer="obras_contencao" checked> <span class="layer-symbol-polygon" style="border-color:#0284c7;background:rgba(2,132,199,0.30);"></span> 🚧 Obras de Contenção · Sec. de Obras (4 polígonos)</label>
@@ -47322,54 +47333,34 @@ window.PCRA_GLOBAL_ADJUSTMENTS = window.PCRA_GLOBAL_ADJUSTMENTS || {};
     }
 
     
-    // ==========================================================
-    // 👥 MAPEAMENTO PARTICIPATIVO UI HANDLERS
+        // ==========================================================
+    // 👥 MAPEAMENTO PARTICIPATIVO UI HANDLERS (LINHA ÚNICA)
     // ==========================================================
     function setupMapeamentoParticipativoUI() {
-      const groupChk = document.getElementById("toggle-group-mapeamento-participativo");
-      const arrowBtn = document.getElementById("btn-toggle-mapeamento-sublayers");
-      const sublayersBox = document.getElementById("mapeamento-participativo-sublayers");
-      const subCheckboxes = document.querySelectorAll(".sublayer-chk-part");
-      
+      const toggleChk = document.getElementById("toggle-mapeamento-participativo") || document.getElementById("toggle-group-mapeamento-participativo");
       const openModalBtn = document.getElementById("btn-open-legenda-participativa");
       const modal = document.getElementById("modal-legenda-participativa");
       const closeModalBtn = document.getElementById("modal-legenda-participativa-close");
 
-      // Master Checkbox: Toggle all 5 sublayers
-      if (groupChk) {
-        groupChk.addEventListener("change", function () {
-          const isChecked = groupChk.checked;
-          subCheckboxes.forEach(function (chk) {
-            chk.checked = isChecked;
-            const lKey = chk.dataset.layer;
-            if (overlayLayers[lKey]) {
-              if (isChecked) {
-                if (!map.hasLayer(overlayLayers[lKey])) overlayLayers[lKey].addTo(map);
-              } else {
-                if (map.hasLayer(overlayLayers[lKey])) map.removeLayer(overlayLayers[lKey]);
-              }
+      const partLayersKeys = ["percepcao_simbolos", "percepcao_anotacoes", "percepcao_caminhos", "percepcao_areas", "percepcao_limite"];
+
+      function updateMapeamentoVisibility() {
+        if (!toggleChk) return;
+        const isChecked = toggleChk.checked;
+        partLayersKeys.forEach(function (k) {
+          if (overlayLayers[k]) {
+            if (isChecked) {
+              if (!map.hasLayer(overlayLayers[k])) overlayLayers[k].addTo(map);
+            } else {
+              if (map.hasLayer(overlayLayers[k])) map.removeLayer(overlayLayers[k]);
             }
-          });
+          }
         });
       }
 
-      // Arrow Toggle: Collapse / Expand sublayers
-      if (arrowBtn && sublayersBox) {
-        arrowBtn.addEventListener("click", function (e) {
-          e.stopPropagation();
-          const isHidden = sublayersBox.style.display === "none";
-          sublayersBox.style.display = isHidden ? "flex" : "none";
-          arrowBtn.textContent = isHidden ? "▾" : "▸";
-        });
+      if (toggleChk) {
+        toggleChk.addEventListener("change", updateMapeamentoVisibility);
       }
-
-      // Update master checkbox if individual sublayers change
-      subCheckboxes.forEach(function (chk) {
-        chk.addEventListener("change", function () {
-          const anyChecked = Array.from(subCheckboxes).some(function (c) { return c.checked; });
-          if (groupChk) groupChk.checked = anyChecked;
-        });
-      });
 
       // Legenda Modal
       if (openModalBtn && modal) {
