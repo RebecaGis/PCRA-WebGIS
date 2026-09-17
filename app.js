@@ -591,7 +591,10 @@
         2: { border: "#dc2626", fill: "#ef4444", opacity: 0.24 }, // AP-02: Vermelho Carmesim
         3: { border: "#eab308", fill: "#facc15", opacity: 0.32 }, // AP-03: Amarelo Vibrante
         4: { border: "#ea580c", fill: "#fb923c", opacity: 0.26 }, // AP-04: Laranja
-        5: { border: "#8b5cf6", fill: "#a78bfa", opacity: 0.26 }  // AP-05: Roxo / Violeta (sem uso de tons de azul)
+        5: { border: "#8b5cf6", fill: "#a78bfa", opacity: 0.26 }, // AP-05: Roxo / Violeta
+        6: { border: "#059669", fill: "#10b981", opacity: 0.26 }, // AP-06: Esmeralda
+        7: { border: "#0891b2", fill: "#06b6d4", opacity: 0.26 }, // AP-07: Turquesa
+        8: { border: "#d946ef", fill: "#e879f9", opacity: 0.26 }  // AP-08: Fúcsia
       };
 
       overlayLayers.areas_prioritarias = L.geoJSON(data.areas_prioritarias, {
@@ -1996,7 +1999,7 @@
         "- 05_lotes_caixa_economica (59 lotes cadastrados da Caixa - 18.858 m²)\n" +
         "- 06_setores_risco_geologico (Setores de Risco Geológico R1, R2, R3 e R4)\n" +
         "- 07_area_atuacao_pcra_burnier (Polígono perimetral de atuação do projeto - 17,49 ha)\n" +
-        "- 08_areas_prioritarias_plano_de_acao (5 polígonos de intervenção prioritária - 4,24 ha)\n" +
+        "- 08_areas_prioritarias_plano_de_acao (8 polígonos de intervenção prioritária - 6,87 ha)\n" +
         "- 09_obras_contencao_secretaria_de_obras (4 polígonos de contenção da Secretaria de Obras - PJF - 13.907 m²)\n" +
         "- 10_ades_his_parque_burnier (Perímetro da Área de Especial Interesse Social)\n" +
         "- 11_equipamentos_comunitarios (Escolas, Saúde e Instituições Religiosas)\n";
@@ -2079,7 +2082,7 @@
 
     // 8. Áreas Prioritárias (Plano de Ação)
     if (isLayerActive("areas_prioritarias")) {
-      active.push({ type: "polygon_dashed", label: "Áreas Prioritárias (5 áreas · 4,24 ha)", fill: [255, 228, 230], stroke: [225, 29, 72] });
+      active.push({ type: "polygon_dashed", label: "Áreas Prioritárias (8 áreas · 6,87 ha)", fill: [255, 228, 230], stroke: [225, 29, 72] });
     }
 
     // 9. ADES HIS
