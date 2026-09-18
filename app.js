@@ -440,7 +440,7 @@
       if (isLayerChecked("percepcao_caminhos")) overlayLayers.percepcao_caminhos.addTo(map);
     }
 
-    // 4. Áreas Percebidas (9 polígonos)
+    // 4. Áreas Percebidas (8 polígonos)
     if (data.percepcao_areas) {
       overlayLayers.percepcao_areas = L.geoJSON(data.percepcao_areas, {
         style: function (feat) {
