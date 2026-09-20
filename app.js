@@ -7,6 +7,7 @@
   "use strict";
 
   const SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/1vMOxa5_jpBm_A5lQj_pttVW4B2QqYhZRA8RxuBksxtU/export?format=csv&gid=0";
+  const PONTOS_ENCONTRO_CSV_URL = "https://docs.google.com/spreadsheets/d/1vMOxa5_jpBm_A5lQj_pttVW4B2QqYhZRA8RxuBksxtU/export?format=csv&gid=1179726511";
   const RISK_COLORS = {
     1: "#075c2a",
     2: "#6f943d",
@@ -17,6 +18,7 @@
 
   let allRecords = [];
   let filteredRecords = [];
+  let allPontosEncontro = [];
   let selectedRecordId = null;
   let currentMetric = "agent";
   let currentRiskFilter = "all";
@@ -274,6 +276,7 @@
   const markersSimpleGroup = L.featureGroup();
 
   const overlayLayers = {};
+  window.PCRA_OVERLAY_LAYERS = overlayLayers;
   const layersData = window.PCRA_LAYERS || {};
 
   function initReferenceLayers() {
@@ -899,6 +902,182 @@
       zIndex: 6
     });
     if (isLayerChecked("declividade_overlay")) overlayLayers.declividade_overlay.addTo(map);
+
+    // Camada Pontos de Encontro (Rotas de Fuga - Sincronizada com Google Sheets)
+    overlayLayers.pontos_encontro = L.featureGroup();
+    fallbackToInitialPontosEncontro();
+    const chkPE = document.querySelector('.layer-toggle-checkbox[data-layer="pontos_encontro"]');
+    if (!chkPE || chkPE.checked) overlayLayers.pontos_encontro.addTo(map);
+  }
+
+  function getPontoEncontroIconUrl() {
+    return (window.PONTO_ENCONTRO_ICON) ||
+           (window.PCRA_PERCEPCAO_ICONS && window.PCRA_PERCEPCAO_ICONS["ponto_encontro"]) ||
+           "./icones/ponto_encontro.png";
+  }
+
+  function normalizePontoEncontro(row, idx) {
+    const fid = row.FID || (idx + 1);
+    const setor = (row.setor || ("PE-" + String(idx + 1).padStart(2, "0"))).trim();
+    const rawLat = String(row.lat || "").replace(",", ".").trim();
+    const rawLng = String(row.long || row.lng || "").replace(",", ".").trim();
+    const lat = parseFloat(rawLat);
+    const lng = parseFloat(rawLng);
+
+    const photos = [];
+    const rawPhotos = row.Fotografias || "";
+    const photoMatches = String(rawPhotos).match(/[-\w]{25,}/g);
+    if (photoMatches) {
+      const seen = new Set();
+      photoMatches.forEach(function (id) {
+        if (!seen.has(id)) {
+          seen.add(id);
+          photos.push({
+            id: id,
+            thumbUrl: "https://lh3.googleusercontent.com/d/" + id + "=w600",
+            fullUrl: "https://lh3.googleusercontent.com/d/" + id + "=w1600",
+            viewUrl: "https://drive.google.com/file/d/" + id + "/view?usp=drivesdk"
+          });
+        }
+      });
+    }
+
+    const qtdCasas = parseInt(row.Qtd_casas, 10) || 0;
+    const qtdIdoso = parseInt(row.Qtd_Idoso, 10) || 0;
+    const qtdInterd = parseInt(row.Qtd_Interd, 10) || 0;
+    const qtdPessoas = parseInt(row.Qtd_pesso, 10) || (qtdCasas > 0 ? qtdCasas * 4 : 0);
+
+    return {
+      fid: fid,
+      setor: setor,
+      codigo: setor,
+      nome: "Ponto de Encontro " + setor,
+      lat: lat,
+      lng: lng,
+      qtdCasas: qtdCasas,
+      qtdIdoso: qtdIdoso,
+      qtdInterd: qtdInterd,
+      qtdPessoas: qtdPessoas,
+      referencia: (row.Ref || "").trim() || "Não informada",
+      infra: (row.Infra || "").trim() || "Não",
+      qual: (row.Qual || "").trim() || "Poste / Estrutura existente",
+      photos: photos
+    };
+  }
+
+  function renderPontosEncontro(records) {
+    if (!overlayLayers.pontos_encontro) {
+      overlayLayers.pontos_encontro = L.featureGroup();
+    }
+    overlayLayers.pontos_encontro.clearLayers();
+
+    const iconUrl = getPontoEncontroIconUrl();
+
+    const countBadge = document.getElementById("pontos-encontro-count-badge");
+    if (countBadge) countBadge.textContent = records.length;
+
+    records.forEach(function (rec) {
+      if (isNaN(rec.lat) || isNaN(rec.lng)) return;
+
+      const customIcon = L.divIcon({
+        className: "ponto-encontro-marker-icon",
+        html: "<div class='ponto-encontro-marker' title='" + rec.nome + " - Rota de Fuga'>" +
+                "<img src='" + iconUrl + "' alt='" + rec.codigo + "' class='ponto-encontro-marker-img' onerror=\"this.onerror=null;this.src='./icones/ponto_encontro.png';\">" +
+              "</div>",
+        iconSize: [36, 36],
+        iconAnchor: [18, 18],
+        popupAnchor: [0, -18]
+      });
+
+      const marker = L.marker([rec.lat, rec.lng], { icon: customIcon });
+
+      marker.bindTooltip(
+        "<strong>🚸 " + rec.nome + "</strong><br>" +
+        "📍 " + rec.qual + (rec.referencia && rec.referencia !== "Não informada" ? "<br>👤 Ref: <strong>" + rec.referencia + "</strong>" : "") +
+        "<br>🏠 <strong>" + rec.qtdCasas + "</strong> casas atendidas", {
+          direction: "top",
+          offset: [0, -18],
+          className: "custom-area-tooltip"
+        }
+      );
+
+      // Photos HTML for popup
+      let photosHtml = "";
+      if (rec.photos && rec.photos.length > 0) {
+        photosHtml = "<div style='margin-top:8px;border-top:1px solid var(--line);padding-top:8px;'>" +
+          "<div style='font-size:0.72rem;font-weight:700;color:var(--text-muted);margin-bottom:6px;display:flex;justify-content:space-between;align-items:center;'>" +
+            "<span>📸 REGISTROS FOTOGRÁFICOS (" + rec.photos.length + ")</span>" +
+          "</div>" +
+          "<div class='photo-gallery-grid' style='grid-template-columns: repeat(auto-fill, minmax(65px, 1fr)); gap: 6px;'>" +
+            rec.photos.map(function(p, i) {
+              return "<div class='photo-thumb-card' style='aspect-ratio:1;cursor:pointer;' onclick='window.openPhotoLightbox(\"" + p.id + "\", \"Fotografia " + (i + 1) + " · " + rec.nome + "\")'>" +
+                "<img src='" + p.thumbUrl + "' alt='Foto " + (i + 1) + "' loading='lazy' referrerpolicy='no-referrer' onerror='this.onerror=null; this.src=\"https://drive.google.com/thumbnail?id=" + p.id + "&sz=w600\";' style='width:100%;height:100%;object-fit:cover;border-radius:4px;'>" +
+                "<div class='photo-thumb-overlay'><span>#" + (i + 1) + "</span></div>" +
+              "</div>";
+            }).join("") +
+          "</div>" +
+        "</div>";
+      }
+
+      const gmapsLink = "https://www.google.com/maps?q=" + rec.lat + "," + rec.lng;
+
+      const popupHtml =
+        "<div class='popup-custom-card'>" +
+          "<div style='display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;padding-right:15px;'>" +
+            "<span class='ponto-encontro-badge'>🚸 Rota de Fuga</span>" +
+            "<span style='font-size:0.8rem;font-weight:800;color:#15803d;'>" + rec.codigo + "</span>" +
+          "</div>" +
+          "<div class='popup-custom-header' style='color:#14532d;font-size:1.05rem;margin-bottom:2px;display:flex;align-items:center;gap:6px;'>" +
+            "<img src='" + iconUrl + "' style='width:22px;height:22px;object-fit:contain;vertical-align:middle;' onerror=\"this.onerror=null;this.src='./icones/ponto_encontro.png';\">" +
+            "<span>" + rec.nome + "</span>" +
+          "</div>" +
+          "<div class='popup-custom-addr' style='margin-bottom:8px;'>Instalação: <strong>" + rec.qual + "</strong></div>" +
+          
+          "<div style='display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:8px;'>" +
+            "<div style='background:rgba(22,101,52,0.06);border:1px solid rgba(22,101,52,0.18);border-radius:6px;padding:6px 8px;text-align:center;'>" +
+              "<div style='font-size:0.65rem;color:var(--text-muted);font-weight:700;text-transform:uppercase;'>Casas Atendidas</div>" +
+              "<div style='font-size:1.15rem;font-weight:800;color:#15803d;'>" + rec.qtdCasas + "</div>" +
+            "</div>" +
+            "<div style='background:rgba(217,119,6,0.08);border:1px solid rgba(217,119,6,0.22);border-radius:6px;padding:6px 8px;text-align:center;'>" +
+              "<div style='font-size:0.65rem;color:var(--text-muted);font-weight:700;text-transform:uppercase;'>Idosos</div>" +
+              "<div style='font-size:1.15rem;font-weight:800;color:#b45309;'>" + rec.qtdIdoso + "</div>" +
+            "</div>" +
+            "<div style='background:rgba(220,38,38,0.08);border:1px solid rgba(220,38,38,0.22);border-radius:6px;padding:6px 8px;text-align:center;'>" +
+              "<div style='font-size:0.65rem;color:var(--text-muted);font-weight:700;text-transform:uppercase;'>Interditadas</div>" +
+              "<div style='font-size:1.15rem;font-weight:800;color:#dc2626;'>" + rec.qtdInterd + "</div>" +
+            "</div>" +
+            "<div style='background:rgba(2,132,199,0.08);border:1px solid rgba(2,132,199,0.22);border-radius:6px;padding:6px 8px;text-align:center;'>" +
+              "<div style='font-size:0.65rem;color:var(--text-muted);font-weight:700;text-transform:uppercase;'>Pop. Estimada</div>" +
+              "<div style='font-size:1.15rem;font-weight:800;color:#0284c7;'>" + rec.qtdPessoas + " hab</div>" +
+            "</div>" +
+          "</div>" +
+
+          "<div style='font-size:0.75rem;color:var(--text-muted);border-top:1px solid var(--line);padding-top:6px;line-height:1.55;'>" +
+            "<strong>👤 Referência Comunitária:</strong> <span style='color:var(--forest-dark);font-weight:700;'>" + rec.referencia + "</span><br>" +
+            "<strong>🛠️ Infraestrutura Fixada:</strong> " + rec.infra + " (" + rec.qual + ")<br>" +
+            "<strong>🌐 Coordenadas:</strong> <a href='" + gmapsLink + "' target='_blank' rel='noopener noreferrer' style='color:#15803d;font-weight:700;text-decoration:underline;'>🗺️ " + rec.lat.toFixed(6) + ", " + rec.lng.toFixed(6) + " ↗</a>" +
+          "</div>" +
+          photosHtml +
+        "</div>";
+
+      marker.bindPopup(popupHtml, { maxWidth: 320 });
+      overlayLayers.pontos_encontro.addLayer(marker);
+    });
+
+    const chk = document.querySelector('.layer-toggle-checkbox[data-layer="pontos_encontro"]');
+    const isChecked = chk ? chk.checked : true;
+    if (isChecked && !map.hasLayer(overlayLayers.pontos_encontro)) {
+      overlayLayers.pontos_encontro.addTo(map);
+    } else if (!isChecked && map.hasLayer(overlayLayers.pontos_encontro)) {
+      map.removeLayer(overlayLayers.pontos_encontro);
+    }
+  }
+
+  function fallbackToInitialPontosEncontro() {
+    if (window.INITIAL_PONTOS_ENCONTRO && window.INITIAL_PONTOS_ENCONTRO.length > 0 && allPontosEncontro.length === 0) {
+      allPontosEncontro = window.INITIAL_PONTOS_ENCONTRO.map(function(row, idx) { return normalizePontoEncontro(row, idx); });
+      renderPontosEncontro(allPontosEncontro);
+    }
   }
 
 
@@ -1553,28 +1732,65 @@
     els.syncPulse.classList.add("syncing");
     els.syncText.textContent = "Sincronizando...";
 
-    fetch(SHEET_CSV_URL + "&t=" + Date.now())
+    const t = Date.now();
+    const fetchInspections = fetch(SHEET_CSV_URL + "&t=" + t)
       .then(function (response) {
         if (!response.ok) throw new Error("Falha HTTP " + response.status);
         return response.text();
       })
       .then(function (csvText) {
-        Papa.parse(csvText, {
-          header: true,
-          skipEmptyLines: true,
-          complete: function (results) {
-            if (results.data && results.data.length > 0) {
-              allRecords = results.data.map(function(row, idx) { return normalizeRecord(row, idx); });
-              onDataLoaded(true);
-            }
-          },
-          error: function () {
-            fallbackToInitialRecords();
-          }
+        return new Promise(function (resolve, reject) {
+          Papa.parse(csvText, {
+            header: true,
+            skipEmptyLines: true,
+            complete: function (results) { resolve(results.data || []); },
+            error: reject
+          });
         });
+      });
+
+    const fetchPontosEncontro = fetch(PONTOS_ENCONTRO_CSV_URL + "&t=" + t)
+      .then(function (response) {
+        if (!response.ok) throw new Error("Falha HTTP " + response.status);
+        return response.text();
+      })
+      .then(function (csvText) {
+        return new Promise(function (resolve, reject) {
+          Papa.parse(csvText, {
+            header: true,
+            skipEmptyLines: true,
+            complete: function (results) { resolve(results.data || []); },
+            error: reject
+          });
+        });
+      });
+
+    Promise.allSettled([fetchInspections, fetchPontosEncontro])
+      .then(function (results) {
+        const inspRes = results[0];
+        const peRes = results[1];
+
+        let isOnline = false;
+
+        if (inspRes.status === "fulfilled" && inspRes.value.length > 0) {
+          allRecords = inspRes.value.map(function(row, idx) { return normalizeRecord(row, idx); });
+          isOnline = true;
+        } else {
+          fallbackToInitialRecords();
+        }
+
+        if (peRes.status === "fulfilled" && peRes.value.length > 0) {
+          allPontosEncontro = peRes.value.map(function(row, idx) { return normalizePontoEncontro(row, idx); });
+          renderPontosEncontro(allPontosEncontro);
+        } else {
+          fallbackToInitialPontosEncontro();
+        }
+
+        onDataLoaded(isOnline);
       })
       .catch(function () {
         fallbackToInitialRecords();
+        fallbackToInitialPontosEncontro();
       })
       .finally(function () {
         isSyncing = false;
@@ -1592,9 +1808,10 @@
   function onDataLoaded(isOnline) {
     lastSyncTime = new Date();
     const timeStr = lastSyncTime.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
+    const peCount = allPontosEncontro.length > 0 ? (" · " + allPontosEncontro.length + " PE") : "";
     els.syncText.textContent = isOnline
-      ? ("Conectado · " + allRecords.length + " pontos (" + timeStr + ")")
-      : ("Modo Local · " + allRecords.length + " pontos");
+      ? ("Conectado · " + allRecords.length + " pontos" + peCount + " (" + timeStr + ")")
+      : ("Modo Local · " + allRecords.length + " pontos" + peCount);
     populateFilterOptions();
     applyFilters();
   }
@@ -1982,7 +2199,37 @@
         folder.file("16_percepcao_limite_desenhado.geojson", JSON.stringify(allLayers.percepcao_limite, null, 2));
         folder.file("16_percepcao_limite_desenhado.kml", convertGeoJSONToKML(allLayers.percepcao_limite, "Limite Desenhado"));
       }
-      // 17. README
+      if (allPontosEncontro && allPontosEncontro.length > 0) {
+        const peGeo = {
+          type: "FeatureCollection",
+          name: "pontos_encontro_rotas_de_fuga",
+          features: allPontosEncontro.map(function (p) {
+            return {
+              type: "Feature",
+              properties: {
+                fid: p.fid,
+                setor: p.setor,
+                nome: p.nome,
+                referencia: p.referencia,
+                infra: p.infra,
+                instalacao: p.qual,
+                qtd_casas: p.qtdCasas,
+                qtd_idosos: p.qtdIdoso,
+                qtd_interditadas: p.qtdInterd,
+                qtd_pessoas: p.qtdPessoas,
+                fotografias_qtd: p.photos ? p.photos.length : 0
+              },
+              geometry: {
+                type: "Point",
+                coordinates: [p.lng, p.lat]
+              }
+            };
+          })
+        };
+        folder.file("17_pontos_encontro_rotas_de_fuga.geojson", JSON.stringify(peGeo, null, 2));
+        folder.file("17_pontos_encontro_rotas_de_fuga.kml", convertGeoJSONToKML(peGeo, "Pontos de Encontro (Rotas de Fuga)"));
+      }
+      // 18. README
       const readme = "=========================================================\n" +
         "PLANO COMUNITÁRIO DE REDUÇÃO DE RISCOS (PCRA) — PARQUE BURNIER\n" +
         "PACOTE DE DADOS GEOESPACIAIS VETORIAIS (SIG / WEBGIS)\n" +
@@ -2002,7 +2249,8 @@
         "- 08_areas_prioritarias_plano_de_acao (8 polígonos de intervenção prioritária - 6,87 ha)\n" +
         "- 09_obras_contencao_secretaria_de_obras (4 polígonos de contenção da Secretaria de Obras - PJF - 13.907 m²)\n" +
         "- 10_ades_his_parque_burnier (Perímetro da Área de Especial Interesse Social)\n" +
-        "- 11_equipamentos_comunitarios (Escolas, Saúde e Instituições Religiosas)\n";
+        "- 11_equipamentos_comunitarios (Escolas, Saúde e Instituições Religiosas)\n" +
+        "- 17_pontos_encontro_rotas_de_fuga (Pontos de Encontro das Rotas de Fuga do PCRA)\n";
       folder.file("LEIAME_METADADOS.txt", readme);
 
       const blob = await zip.generateAsync({ type: "blob" });
@@ -2040,6 +2288,16 @@
       if (chk) return chk.checked;
       return overlayLayers[key] && map.hasLayer(overlayLayers[key]);
     };
+
+    // Pontos de Encontro (Rotas de Fuga)
+    if (isLayerActive("pontos_encontro") && allPontosEncontro.length > 0) {
+      active.push({
+        type: "point",
+        label: "Pontos de Encontro / Rotas de Fuga (" + allPontosEncontro.length + " PE)",
+        fill: [20, 83, 45],
+        stroke: [255, 255, 255]
+      });
+    }
 
     // 2. Obras de Contenção
     if (isLayerActive("obras_contencao")) {
@@ -4510,6 +4768,7 @@
       updateAdjustedUI();
       switchTab("list");
       fallbackToInitialRecords();
+      fallbackToInitialPontosEncontro();
       setTimeout(function () { map.invalidateSize(); }, 150);
       syncData();
     }

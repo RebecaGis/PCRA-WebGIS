@@ -1,0 +1,72 @@
+window.INITIAL_PONTOS_ENCONTRO = [
+  {
+    "FID": "1",
+    "setor": "PE-01",
+    "Qtd_pesso": "",
+    "Qtd_Idoso": "2",
+    "Qtd_casas": "27",
+    "Qtd_Interd": "11",
+    "Ref": "Fabiana",
+    "Infra": "Não",
+    "Qual": "Poste Cemig existente",
+    "Fotografias": "https://drive.google.com/file/d/1V9J-M0-Dw9krC2--eUKFJLLp--1rRUMV/view\nhttps://drive.google.com/file/d/1QWVKfeuex_Ru0zu8w1ufhFuUPZ-oCa6M/view\nhttps://drive.google.com/file/d/1R1PIz2dh-VvVqWwe08xOHQBcVYNQ3ixm/view\nhttps://drive.google.com/file/d/1096V-bUXwGmm_t9b8s9adOJtYsPr8-xQ/view\nhttps://drive.google.com/file/d/14DoI2uU5x8baXE7akK2wBhx_YaJkI3na/view",
+    "lat": "-21,760784",
+    "long": "-43,328808"
+  },
+  {
+    "FID": "2",
+    "setor": "PE-02",
+    "Qtd_pesso": "",
+    "Qtd_Idoso": "3",
+    "Qtd_casas": "50",
+    "Qtd_Interd": "6",
+    "Ref": "",
+    "Infra": "Não",
+    "Qual": "Poste Cemig existente",
+    "Fotografias": "https://drive.google.com/file/d/1nc7i1mV536mAiqI-BdvQPdTulLZ-qiLa/view\nhttps://drive.google.com/file/d/1GZLb6Vrvgudu2HBkjNmXNWkvbCHERJYD/view\nhttps://drive.google.com/file/d/1KV4iQjx_RL4XJshbNdGMxO9g1Vu11JXh/view",
+    "lat": "-21,761493",
+    "long": "-43,328361"
+  },
+  {
+    "FID": "3",
+    "setor": "PE-03",
+    "Qtd_pesso": "",
+    "Qtd_Idoso": "0",
+    "Qtd_casas": "60",
+    "Qtd_Interd": "3",
+    "Ref": "",
+    "Infra": "Não",
+    "Qual": "Poste Cemig existente",
+    "Fotografias": "https://drive.google.com/file/d/1sayWZWcHdEXZu6GHHz1DtmFaZEAl9wz6/view\nhttps://drive.google.com/file/d/1feBV3GgiVS98-l1xP8ySvZHF9oVNsEYM/view\nhttps://drive.google.com/file/d/1iT8mBL7Bq4lbSUxZXPv27Rytsa2Au_6f/view",
+    "lat": "-21,761535",
+    "long": "-43,329104"
+  },
+  {
+    "FID": "4",
+    "setor": "PE-04",
+    "Qtd_pesso": "",
+    "Qtd_Idoso": "4",
+    "Qtd_casas": "20",
+    "Qtd_Interd": "11",
+    "Ref": "Wellington",
+    "Infra": "Não",
+    "Qual": "Parede da mercearia",
+    "Fotografias": "https://drive.google.com/file/d/1KPoKiF_H9chrq9Vb43Go4bPHmvVsT_OD/view\nhttps://drive.google.com/file/d/1pzSDO4_2CSKDBbi_t7R9CggyY00_gMfQ/view",
+    "lat": "-21,762475",
+    "long": "-43,327641"
+  },
+  {
+    "FID": "5",
+    "setor": "PE-05",
+    "Qtd_pesso": "",
+    "Qtd_Idoso": "12",
+    "Qtd_casas": "40",
+    "Qtd_Interd": "12",
+    "Ref": "Sandra",
+    "Infra": "Não",
+    "Qual": "Poste Cemig existente",
+    "Fotografias": "https://drive.google.com/file/d/1DZtPsMTdvpNOnB5fQgIlmyyZkwhp-Chs/view\nhttps://drive.google.com/file/d/1GXsTTLZST--aRDUM0Xv4uap-jy-9b4AT/view\nhttps://drive.google.com/file/d/1EoTPVjCl6txwNVKgOxa88CKPUZko-7Ju/view",
+    "lat": "-21,762352",
+    "long": "-43,328856"
+  }
+];
