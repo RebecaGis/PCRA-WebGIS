@@ -1380,7 +1380,7 @@ html, body {
 .map-tools-widget, .map-measure-widget {
   top: 14px;
   left: 14px;
-  width: 275px;
+  width: 295px;
   box-sizing: border-box;
   padding: 10px 12px;
   transition: all 0.2s ease;
@@ -3716,97 +3716,65 @@ html, body {
 }
 
 /* ==========================================================================
-   Widget de Alertas INMET - Identidade Visual PCRA
+   Widget de Alertas INMET - Ícone Discreto junto às Ferramentas WebGIS
    ========================================================================== */
-.layer-inmet-card {
-  background: rgba(234, 88, 12, 0.08);
-  border: 1.5px solid rgba(234, 88, 12, 0.35);
-  border-radius: 6px;
-  padding: 6px 8px;
-  margin: 4px 0;
-  box-sizing: border-box;
-}
-
-[data-theme="dark"] .layer-inmet-card {
-  background: rgba(234, 88, 12, 0.15);
-  border-color: rgba(234, 88, 12, 0.4);
-}
-
-.btn-inmet-pill {
-  width: 100%;
-  box-sizing: border-box;
-  background: #ea580c;
-  color: #ffffff;
-  border: none;
-  border-radius: 4px;
-  padding: 5px 8px;
-  font-size: 0.70rem;
-  font-weight: 700;
-  cursor: pointer;
-  white-space: nowrap;
-  transition: all 0.15s ease;
-  box-shadow: 0 1px 3px rgba(234, 88, 12, 0.3);
-  display: flex;
+.tool-inmet-icon-btn {
+  display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 5px;
-  margin-top: 4px;
-}
-
-.btn-inmet-pill:hover {
-  background: #c2410c;
-  transform: translateY(-1px);
-  box-shadow: 0 2px 5px rgba(234, 88, 12, 0.4);
-}
-
-.btn-inmet-pill.stable {
-  background: #16a34a;
-  box-shadow: 0 1px 3px rgba(22, 163, 74, 0.3);
-}
-
-.btn-inmet-pill.stable:hover {
-  background: #15803d;
-}
-
-/* Floating pill no mapa (canto inferior esquerdo, acima da legenda) */
-.inmet-floating-pill {
-  position: absolute;
-  bottom: 84px;
-  left: 16px;
-  z-index: 1000;
-  background: rgba(25, 30, 20, 0.90);
-  backdrop-filter: blur(4px);
-  border: 1.5px solid rgba(234, 88, 12, 0.8);
-  color: #ffffff;
-  border-radius: 20px;
-  padding: 4px 10px;
-  font-size: 0.72rem;
-  font-weight: 700;
-  display: flex;
-  align-items: center;
-  gap: 7px;
+  position: relative;
+  width: 28px;
+  height: 24px;
+  background: var(--bg-subtle, rgba(0, 0, 0, 0.05));
+  border: 1px solid var(--line);
+  border-radius: 5px;
   cursor: pointer;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
-  transition: all 0.2s ease;
+  padding: 0;
+  transition: all 0.15s ease;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
 }
 
-.inmet-floating-pill:hover {
-  background: rgba(25, 30, 20, 0.98);
+.tool-inmet-icon-btn:hover {
+  background: rgba(234, 88, 12, 0.15);
+  border-color: #ea580c;
   transform: translateY(-1px);
 }
 
-.inmet-floating-close {
-  background: transparent;
-  border: none;
-  color: rgba(255, 255, 255, 0.65);
-  font-size: 0.9rem;
-  cursor: pointer;
-  padding: 0 2px;
+.tool-inmet-emoji {
+  font-size: 0.95rem;
   line-height: 1;
 }
 
-.inmet-floating-close:hover {
-  color: #ffffff;
+.tool-inmet-dot {
+  position: absolute;
+  top: -2px;
+  right: -2px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #4ade80; /* verde padrão */
+  border: 1.5px solid var(--bg-card, #ffffff);
+  box-shadow: 0 0 0 0 rgba(74, 222, 128, 0.6);
+}
+
+.tool-inmet-dot.active-alert {
+  background: #ea580c;
+  animation: pulseInmetDot 1.2s infinite;
+}
+
+@keyframes pulseInmetDot {
+  0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(234, 88, 12, 0.7); }
+  70% { transform: scale(1.15); box-shadow: 0 0 0 5px rgba(234, 88, 12, 0); }
+  100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(234, 88, 12, 0); }
+}
+
+[data-theme="dark"] .tool-inmet-icon-btn {
+  background: #111e14;
+  border-color: #294732;
+}
+
+[data-theme="dark"] .tool-inmet-dot {
+  border-color: #132217;
 }
 
 .inmet-status-dot {

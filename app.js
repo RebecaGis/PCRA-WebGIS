@@ -4775,12 +4775,8 @@
     // INMET - Carregamento de Avisos e Controle de Interface
     // ==========================================================================
     async function carregarAlertasINMET() {
-      const cardDot = document.getElementById("inmet-card-dot");
-      const cardBtnText = document.getElementById("inmet-card-btn-text");
-      const btnOpenModal = document.getElementById("btn-open-inmet-modal");
-      const floatingPill = document.getElementById("inmet-floating-pill");
-      const floatingText = document.getElementById("inmet-floating-text");
-      const floatingDot = document.getElementById("inmet-floating-dot");
+      const toolBtn = document.getElementById("btn-inmet-tool-icon");
+      const toolDot = document.getElementById("inmet-tool-dot");
       const modalContent = document.getElementById("inmet-modal-content");
       const modalHeader = document.getElementById("inmet-modal-header");
 
@@ -4804,17 +4800,13 @@
         inmetAlertLayerGroup.clearLayers();
 
         if (avisosJuizDeFora.length === 0) {
-          if (cardBtnText) cardBtnText.textContent = "✅ Clima Estável (Sem avisos ativos)";
-          if (cardDot) {
-            cardDot.style.background = "#4ade80"; // Verde
-            cardDot.classList.remove("active-alert");
+          if (toolDot) {
+            toolDot.style.background = "#4ade80"; // Verde
+            toolDot.classList.remove("active-alert");
           }
-          if (btnOpenModal) {
-            btnOpenModal.classList.add("stable");
-            btnOpenModal.style.background = "#16a34a";
-            btnOpenModal.style.color = "#ffffff";
+          if (toolBtn) {
+            toolBtn.title = "Clima: Estável em Juiz de Fora (Sem avisos de tempo severo) · Clique para detalhes";
           }
-          if (floatingPill) floatingPill.style.display = "none";
           if (modalHeader) modalHeader.style.background = "var(--forest-dark)";
           if (modalContent) {
             modalContent.innerHTML = 
@@ -4835,31 +4827,13 @@
 
         const corAlerta = alertaPrincipal.aviso_cor || "#ea580c";
         const isYellow = (corAlerta === "#FFFE00" || corAlerta.toLowerCase() === "#fffe00");
-        const titleCor = isYellow ? "#ca8a04" : corAlerta;
 
-        if (cardBtnText) {
-          cardBtnText.textContent = "⚠️ " + alertaPrincipal.descricao + " (" + alertaPrincipal.severidade + ") · Ver " + avisosJuizDeFora.length + " avisos";
+        if (toolDot) {
+          toolDot.style.background = corAlerta;
+          toolDot.classList.add("active-alert");
         }
-        if (cardDot) {
-          cardDot.style.background = corAlerta;
-          cardDot.classList.add("active-alert");
-        }
-        if (btnOpenModal) {
-          btnOpenModal.classList.remove("stable");
-          btnOpenModal.style.background = corAlerta;
-          btnOpenModal.style.color = isYellow ? "#1f2937" : "#ffffff";
-        }
-
-        // Floating pill discreto no mapa
-        if (floatingPill) {
-          floatingPill.style.display = "flex";
-          floatingPill.style.borderColor = corAlerta;
-          if (floatingText) {
-            floatingText.textContent = alertaPrincipal.descricao + ": " + alertaPrincipal.severidade;
-          }
-          if (floatingDot) {
-            floatingDot.style.background = corAlerta;
-          }
+        if (toolBtn) {
+          toolBtn.title = "⚠️ Alerta INMET (" + alertaPrincipal.severidade + "): " + alertaPrincipal.descricao + " · Clique para ver " + avisosJuizDeFora.length + " avisos";
         }
 
         if (modalHeader) {
@@ -4973,40 +4947,22 @@
 
       } catch (err) {
         console.error("Erro na comunicação com a API do INMET:", err);
-        if (cardBtnText) cardBtnText.textContent = "Clima: Indisponível";
-        if (cardDot) {
-          cardDot.style.background = "#94a3b8";
-          cardDot.classList.remove("active-alert");
+        if (toolDot) {
+          toolDot.style.background = "#94a3b8";
+          toolDot.classList.remove("active-alert");
         }
       }
     }
 
     function setupINMETEvents() {
-      const btnOpenModal = document.getElementById("btn-open-inmet-modal");
-      const floatingPill = document.getElementById("inmet-floating-pill");
-      const floatingDismiss = document.getElementById("inmet-floating-dismiss");
+      const toolBtn = document.getElementById("btn-inmet-tool-icon");
       const modalInmet = document.getElementById("inmet-modal");
       const chkLayer = document.getElementById("toggle-inmet-alerts-layer");
 
-      if (btnOpenModal && modalInmet) {
-        btnOpenModal.addEventListener("click", function (e) {
+      if (toolBtn && modalInmet) {
+        toolBtn.addEventListener("click", function (e) {
           e.preventDefault();
           modalInmet.classList.add("open");
-        });
-      }
-
-      if (floatingPill && modalInmet) {
-        floatingPill.addEventListener("click", function (e) {
-          if (e.target === floatingDismiss || (e.target && e.target.closest && e.target.closest("#inmet-floating-dismiss"))) return;
-          modalInmet.classList.add("open");
-        });
-      }
-
-      if (floatingDismiss && floatingPill) {
-        floatingDismiss.addEventListener("click", function (e) {
-          e.preventDefault();
-          e.stopPropagation();
-          floatingPill.style.display = "none";
         });
       }
 

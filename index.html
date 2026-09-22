@@ -288,9 +288,16 @@
             <span style="font-size:0.95rem;">🛠️</span>
             <span class="tools-widget-title">Ferramentas</span>
           </div>
-          <div class="tools-tabs-nav">
-            <button id="tools-tab-measure" class="tools-tab-btn active" title="Ferramentas de Medição (Distância e Área)">📐 Medir</button>
-            <button id="tools-tab-draw" class="tools-tab-btn" title="Ferramentas de Desenho e Anotação (Texto, Setas, Polígonos)">✏️ Desenhar</button>
+          <div style="display:flex;align-items:center;gap:5px;">
+            <div class="tools-tabs-nav">
+              <button id="tools-tab-measure" class="tools-tab-btn active" title="Ferramentas de Medição (Distância e Área)">📐 Medir</button>
+              <button id="tools-tab-draw" class="tools-tab-btn" title="Ferramentas de Desenho e Anotação (Texto, Setas, Polígonos)">✏️ Desenhar</button>
+            </div>
+            <!-- Ícone Discreto de Alerta Meteorológico INMET -->
+            <button id="btn-inmet-tool-icon" class="tool-inmet-icon-btn" title="Avisos Meteorológicos INMET · Juiz de Fora (Clique para ver detalhes)">
+              <span class="tool-inmet-emoji">⛈️</span>
+              <span id="inmet-tool-dot" class="tool-inmet-dot"></span>
+            </button>
           </div>
         </div>
 
@@ -472,20 +479,11 @@
               </button>
             </div>
 
-            <!-- Camada Alertas Meteorológicos INMET (Desativada por padrão) -->
-            <div class="layer-inmet-card">
-              <div style="display:flex;align-items:center;justify-content:space-between;gap:6px;width:100%;">
-                <label class="layer-item" style="cursor:pointer;margin:0;font-weight:700;color:var(--forest-dark);flex:1;">
-                  <input type="checkbox" id="toggle-inmet-alerts-layer" class="layer-toggle-checkbox" data-layer="inmet_alertas">
-                  <span class="layer-symbol-emoji">⛈️</span>
-                  <span>Alertas Meteorológicos INMET</span>
-                </label>
-                <span id="inmet-card-dot" class="inmet-status-dot"></span>
-              </div>
-              <button type="button" id="btn-open-inmet-modal" class="btn-inmet-pill" title="Visualizar avisos meteorológicos ativos do INMET em Juiz de Fora">
-                <span id="inmet-card-btn-text">Ver avisos climáticos</span>
-              </button>
-            </div>
+            <label class="layer-item">
+              <input type="checkbox" id="toggle-inmet-alerts-layer" class="layer-toggle-checkbox" data-layer="inmet_alertas">
+              <span class="layer-symbol-emoji">⛈️</span>
+              <span>Mancha de Alertas INMET</span>
+            </label>
 
             <label class="layer-item"><input type="checkbox" class="layer-toggle-checkbox" data-layer="pontos_encontro" checked> <img src="./icones/ponto_encontro.png" style="width:17px;height:17px;object-fit:contain;vertical-align:middle;border-radius:3px;border:1px solid rgba(0,0,0,0.15);" alt="Ponto de Encontro"> <span>Pontos de Encontro (Rotas de Fuga)</span> <span id="pontos-encontro-count-badge" style="margin-left:auto;font-size:0.7rem;background:rgba(20,83,45,0.12);color:#14532d;padding:1px 6px;border-radius:99px;font-weight:700;">5</span></label>
             <label class="layer-item"><input type="checkbox" class="layer-toggle-checkbox" data-layer="obras_contencao" checked> <span class="layer-symbol-polygon" style="border-color:#0284c7;background:rgba(2,132,199,0.30);"></span> 🚧 Obras de Contenção · Sec. de Obras (4 polígonos)</label>
@@ -525,13 +523,6 @@
           <div class="legend-scale-item"><span class="legend-chip" style="background:var(--r4);">4</span> <span>R4 · Alto</span></div>
           <div class="legend-scale-item"><span class="legend-chip" style="background:var(--r5);">5</span> <span>R5 · Crítico</span></div>
         </div>
-      </div>
-
-      <!-- Floating INMET Alert Pill (aparece discretamente apenas quando há alerta ativo) -->
-      <div id="inmet-floating-pill" class="inmet-floating-pill" style="display:none;" title="Avisos Meteorológicos INMET em Juiz de Fora (Clique para ver detalhes)">
-        <span id="inmet-floating-dot" class="inmet-status-dot active-alert"></span>
-        <span id="inmet-floating-text">Alerta INMET</span>
-        <button type="button" id="inmet-floating-dismiss" class="inmet-floating-close" title="Ocultar aviso do mapa">&times;</button>
       </div>
     </div>
   </main>

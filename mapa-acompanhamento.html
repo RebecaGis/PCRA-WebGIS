@@ -1412,7 +1412,7 @@ html, body {
 .map-tools-widget, .map-measure-widget {
   top: 14px;
   left: 14px;
-  width: 275px;
+  width: 295px;
   box-sizing: border-box;
   padding: 10px 12px;
   transition: all 0.2s ease;
@@ -3748,97 +3748,65 @@ html, body {
 }
 
 /* ==========================================================================
-   Widget de Alertas INMET - Identidade Visual PCRA
+   Widget de Alertas INMET - Ícone Discreto junto às Ferramentas WebGIS
    ========================================================================== */
-.layer-inmet-card {
-  background: rgba(234, 88, 12, 0.08);
-  border: 1.5px solid rgba(234, 88, 12, 0.35);
-  border-radius: 6px;
-  padding: 6px 8px;
-  margin: 4px 0;
-  box-sizing: border-box;
-}
-
-[data-theme="dark"] .layer-inmet-card {
-  background: rgba(234, 88, 12, 0.15);
-  border-color: rgba(234, 88, 12, 0.4);
-}
-
-.btn-inmet-pill {
-  width: 100%;
-  box-sizing: border-box;
-  background: #ea580c;
-  color: #ffffff;
-  border: none;
-  border-radius: 4px;
-  padding: 5px 8px;
-  font-size: 0.70rem;
-  font-weight: 700;
-  cursor: pointer;
-  white-space: nowrap;
-  transition: all 0.15s ease;
-  box-shadow: 0 1px 3px rgba(234, 88, 12, 0.3);
-  display: flex;
+.tool-inmet-icon-btn {
+  display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 5px;
-  margin-top: 4px;
-}
-
-.btn-inmet-pill:hover {
-  background: #c2410c;
-  transform: translateY(-1px);
-  box-shadow: 0 2px 5px rgba(234, 88, 12, 0.4);
-}
-
-.btn-inmet-pill.stable {
-  background: #16a34a;
-  box-shadow: 0 1px 3px rgba(22, 163, 74, 0.3);
-}
-
-.btn-inmet-pill.stable:hover {
-  background: #15803d;
-}
-
-/* Floating pill no mapa (canto inferior esquerdo, acima da legenda) */
-.inmet-floating-pill {
-  position: absolute;
-  bottom: 84px;
-  left: 16px;
-  z-index: 1000;
-  background: rgba(25, 30, 20, 0.90);
-  backdrop-filter: blur(4px);
-  border: 1.5px solid rgba(234, 88, 12, 0.8);
-  color: #ffffff;
-  border-radius: 20px;
-  padding: 4px 10px;
-  font-size: 0.72rem;
-  font-weight: 700;
-  display: flex;
-  align-items: center;
-  gap: 7px;
+  position: relative;
+  width: 28px;
+  height: 24px;
+  background: var(--bg-subtle, rgba(0, 0, 0, 0.05));
+  border: 1px solid var(--line);
+  border-radius: 5px;
   cursor: pointer;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
-  transition: all 0.2s ease;
+  padding: 0;
+  transition: all 0.15s ease;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
 }
 
-.inmet-floating-pill:hover {
-  background: rgba(25, 30, 20, 0.98);
+.tool-inmet-icon-btn:hover {
+  background: rgba(234, 88, 12, 0.15);
+  border-color: #ea580c;
   transform: translateY(-1px);
 }
 
-.inmet-floating-close {
-  background: transparent;
-  border: none;
-  color: rgba(255, 255, 255, 0.65);
-  font-size: 0.9rem;
-  cursor: pointer;
-  padding: 0 2px;
+.tool-inmet-emoji {
+  font-size: 0.95rem;
   line-height: 1;
 }
 
-.inmet-floating-close:hover {
-  color: #ffffff;
+.tool-inmet-dot {
+  position: absolute;
+  top: -2px;
+  right: -2px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #4ade80; /* verde padrão */
+  border: 1.5px solid var(--bg-card, #ffffff);
+  box-shadow: 0 0 0 0 rgba(74, 222, 128, 0.6);
+}
+
+.tool-inmet-dot.active-alert {
+  background: #ea580c;
+  animation: pulseInmetDot 1.2s infinite;
+}
+
+@keyframes pulseInmetDot {
+  0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(234, 88, 12, 0.7); }
+  70% { transform: scale(1.15); box-shadow: 0 0 0 5px rgba(234, 88, 12, 0); }
+  100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(234, 88, 12, 0); }
+}
+
+[data-theme="dark"] .tool-inmet-icon-btn {
+  background: #111e14;
+  border-color: #294732;
+}
+
+[data-theme="dark"] .tool-inmet-dot {
+  border-color: #132217;
 }
 
 .inmet-status-dot {
@@ -4223,9 +4191,16 @@ html, body {
             <span style="font-size:0.95rem;">🛠️</span>
             <span class="tools-widget-title">Ferramentas</span>
           </div>
-          <div class="tools-tabs-nav">
-            <button id="tools-tab-measure" class="tools-tab-btn active" title="Ferramentas de Medição (Distância e Área)">📐 Medir</button>
-            <button id="tools-tab-draw" class="tools-tab-btn" title="Ferramentas de Desenho e Anotação (Texto, Setas, Polígonos)">✏️ Desenhar</button>
+          <div style="display:flex;align-items:center;gap:5px;">
+            <div class="tools-tabs-nav">
+              <button id="tools-tab-measure" class="tools-tab-btn active" title="Ferramentas de Medição (Distância e Área)">📐 Medir</button>
+              <button id="tools-tab-draw" class="tools-tab-btn" title="Ferramentas de Desenho e Anotação (Texto, Setas, Polígonos)">✏️ Desenhar</button>
+            </div>
+            <!-- Ícone Discreto de Alerta Meteorológico INMET -->
+            <button id="btn-inmet-tool-icon" class="tool-inmet-icon-btn" title="Avisos Meteorológicos INMET · Juiz de Fora (Clique para ver detalhes)">
+              <span class="tool-inmet-emoji">⛈️</span>
+              <span id="inmet-tool-dot" class="tool-inmet-dot"></span>
+            </button>
           </div>
         </div>
 
@@ -4407,20 +4382,11 @@ html, body {
               </button>
             </div>
 
-            <!-- Camada Alertas Meteorológicos INMET (Desativada por padrão) -->
-            <div class="layer-inmet-card">
-              <div style="display:flex;align-items:center;justify-content:space-between;gap:6px;width:100%;">
-                <label class="layer-item" style="cursor:pointer;margin:0;font-weight:700;color:var(--forest-dark);flex:1;">
-                  <input type="checkbox" id="toggle-inmet-alerts-layer" class="layer-toggle-checkbox" data-layer="inmet_alertas">
-                  <span class="layer-symbol-emoji">⛈️</span>
-                  <span>Alertas Meteorológicos INMET</span>
-                </label>
-                <span id="inmet-card-dot" class="inmet-status-dot"></span>
-              </div>
-              <button type="button" id="btn-open-inmet-modal" class="btn-inmet-pill" title="Visualizar avisos meteorológicos ativos do INMET em Juiz de Fora">
-                <span id="inmet-card-btn-text">Ver avisos climáticos</span>
-              </button>
-            </div>
+            <label class="layer-item">
+              <input type="checkbox" id="toggle-inmet-alerts-layer" class="layer-toggle-checkbox" data-layer="inmet_alertas">
+              <span class="layer-symbol-emoji">⛈️</span>
+              <span>Mancha de Alertas INMET</span>
+            </label>
 
             <label class="layer-item"><input type="checkbox" class="layer-toggle-checkbox" data-layer="pontos_encontro" checked> <img src="./icones/ponto_encontro.png" style="width:17px;height:17px;object-fit:contain;vertical-align:middle;border-radius:3px;border:1px solid rgba(0,0,0,0.15);" alt="Ponto de Encontro"> <span>Pontos de Encontro (Rotas de Fuga)</span> <span id="pontos-encontro-count-badge" style="margin-left:auto;font-size:0.7rem;background:rgba(20,83,45,0.12);color:#14532d;padding:1px 6px;border-radius:99px;font-weight:700;">5</span></label>
             <label class="layer-item"><input type="checkbox" class="layer-toggle-checkbox" data-layer="obras_contencao" checked> <span class="layer-symbol-polygon" style="border-color:#0284c7;background:rgba(2,132,199,0.30);"></span> 🚧 Obras de Contenção · Sec. de Obras (4 polígonos)</label>
@@ -4460,13 +4426,6 @@ html, body {
           <div class="legend-scale-item"><span class="legend-chip" style="background:var(--r4);">4</span> <span>R4 · Alto</span></div>
           <div class="legend-scale-item"><span class="legend-chip" style="background:var(--r5);">5</span> <span>R5 · Crítico</span></div>
         </div>
-      </div>
-
-      <!-- Floating INMET Alert Pill (aparece discretamente apenas quando há alerta ativo) -->
-      <div id="inmet-floating-pill" class="inmet-floating-pill" style="display:none;" title="Avisos Meteorológicos INMET em Juiz de Fora (Clique para ver detalhes)">
-        <span id="inmet-floating-dot" class="inmet-status-dot active-alert"></span>
-        <span id="inmet-floating-text">Alerta INMET</span>
-        <button type="button" id="inmet-floating-dismiss" class="inmet-floating-close" title="Ocultar aviso do mapa">&times;</button>
       </div>
     </div>
   </main>
@@ -10052,12 +10011,8 @@ window.PCRA_GLOBAL_ADJUSTMENTS = window.PCRA_GLOBAL_ADJUSTMENTS || {};
     // INMET - Carregamento de Avisos e Controle de Interface
     // ==========================================================================
     async function carregarAlertasINMET() {
-      const cardDot = document.getElementById("inmet-card-dot");
-      const cardBtnText = document.getElementById("inmet-card-btn-text");
-      const btnOpenModal = document.getElementById("btn-open-inmet-modal");
-      const floatingPill = document.getElementById("inmet-floating-pill");
-      const floatingText = document.getElementById("inmet-floating-text");
-      const floatingDot = document.getElementById("inmet-floating-dot");
+      const toolBtn = document.getElementById("btn-inmet-tool-icon");
+      const toolDot = document.getElementById("inmet-tool-dot");
       const modalContent = document.getElementById("inmet-modal-content");
       const modalHeader = document.getElementById("inmet-modal-header");
 
@@ -10081,17 +10036,13 @@ window.PCRA_GLOBAL_ADJUSTMENTS = window.PCRA_GLOBAL_ADJUSTMENTS || {};
         inmetAlertLayerGroup.clearLayers();
 
         if (avisosJuizDeFora.length === 0) {
-          if (cardBtnText) cardBtnText.textContent = "✅ Clima Estável (Sem avisos ativos)";
-          if (cardDot) {
-            cardDot.style.background = "#4ade80"; // Verde
-            cardDot.classList.remove("active-alert");
+          if (toolDot) {
+            toolDot.style.background = "#4ade80"; // Verde
+            toolDot.classList.remove("active-alert");
           }
-          if (btnOpenModal) {
-            btnOpenModal.classList.add("stable");
-            btnOpenModal.style.background = "#16a34a";
-            btnOpenModal.style.color = "#ffffff";
+          if (toolBtn) {
+            toolBtn.title = "Clima: Estável em Juiz de Fora (Sem avisos de tempo severo) · Clique para detalhes";
           }
-          if (floatingPill) floatingPill.style.display = "none";
           if (modalHeader) modalHeader.style.background = "var(--forest-dark)";
           if (modalContent) {
             modalContent.innerHTML = 
@@ -10112,31 +10063,13 @@ window.PCRA_GLOBAL_ADJUSTMENTS = window.PCRA_GLOBAL_ADJUSTMENTS || {};
 
         const corAlerta = alertaPrincipal.aviso_cor || "#ea580c";
         const isYellow = (corAlerta === "#FFFE00" || corAlerta.toLowerCase() === "#fffe00");
-        const titleCor = isYellow ? "#ca8a04" : corAlerta;
 
-        if (cardBtnText) {
-          cardBtnText.textContent = "⚠️ " + alertaPrincipal.descricao + " (" + alertaPrincipal.severidade + ") · Ver " + avisosJuizDeFora.length + " avisos";
+        if (toolDot) {
+          toolDot.style.background = corAlerta;
+          toolDot.classList.add("active-alert");
         }
-        if (cardDot) {
-          cardDot.style.background = corAlerta;
-          cardDot.classList.add("active-alert");
-        }
-        if (btnOpenModal) {
-          btnOpenModal.classList.remove("stable");
-          btnOpenModal.style.background = corAlerta;
-          btnOpenModal.style.color = isYellow ? "#1f2937" : "#ffffff";
-        }
-
-        // Floating pill discreto no mapa
-        if (floatingPill) {
-          floatingPill.style.display = "flex";
-          floatingPill.style.borderColor = corAlerta;
-          if (floatingText) {
-            floatingText.textContent = alertaPrincipal.descricao + ": " + alertaPrincipal.severidade;
-          }
-          if (floatingDot) {
-            floatingDot.style.background = corAlerta;
-          }
+        if (toolBtn) {
+          toolBtn.title = "⚠️ Alerta INMET (" + alertaPrincipal.severidade + "): " + alertaPrincipal.descricao + " · Clique para ver " + avisosJuizDeFora.length + " avisos";
         }
 
         if (modalHeader) {
@@ -10250,40 +10183,22 @@ window.PCRA_GLOBAL_ADJUSTMENTS = window.PCRA_GLOBAL_ADJUSTMENTS || {};
 
       } catch (err) {
         console.error("Erro na comunicação com a API do INMET:", err);
-        if (cardBtnText) cardBtnText.textContent = "Clima: Indisponível";
-        if (cardDot) {
-          cardDot.style.background = "#94a3b8";
-          cardDot.classList.remove("active-alert");
+        if (toolDot) {
+          toolDot.style.background = "#94a3b8";
+          toolDot.classList.remove("active-alert");
         }
       }
     }
 
     function setupINMETEvents() {
-      const btnOpenModal = document.getElementById("btn-open-inmet-modal");
-      const floatingPill = document.getElementById("inmet-floating-pill");
-      const floatingDismiss = document.getElementById("inmet-floating-dismiss");
+      const toolBtn = document.getElementById("btn-inmet-tool-icon");
       const modalInmet = document.getElementById("inmet-modal");
       const chkLayer = document.getElementById("toggle-inmet-alerts-layer");
 
-      if (btnOpenModal && modalInmet) {
-        btnOpenModal.addEventListener("click", function (e) {
+      if (toolBtn && modalInmet) {
+        toolBtn.addEventListener("click", function (e) {
           e.preventDefault();
           modalInmet.classList.add("open");
-        });
-      }
-
-      if (floatingPill && modalInmet) {
-        floatingPill.addEventListener("click", function (e) {
-          if (e.target === floatingDismiss || (e.target && e.target.closest && e.target.closest("#inmet-floating-dismiss"))) return;
-          modalInmet.classList.add("open");
-        });
-      }
-
-      if (floatingDismiss && floatingPill) {
-        floatingDismiss.addEventListener("click", function (e) {
-          e.preventDefault();
-          e.stopPropagation();
-          floatingPill.style.display = "none";
         });
       }
 
