@@ -3718,26 +3718,95 @@ html, body {
 /* ==========================================================================
    Widget de Alertas INMET - Identidade Visual PCRA
    ========================================================================== */
-.inmet-alert-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 7px;
-  background: rgba(255, 255, 255, 0.12);
-  border: 1.5px solid rgba(216, 222, 184, 0.4);
-  padding: 4px 12px;
-  border-radius: var(--radius-pill);
-  font-size: 0.74rem;
-  color: var(--cream);
-  font-weight: 700;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  white-space: nowrap;
+.layer-inmet-card {
+  background: rgba(234, 88, 12, 0.08);
+  border: 1.5px solid rgba(234, 88, 12, 0.35);
+  border-radius: 6px;
+  padding: 6px 8px;
+  margin: 4px 0;
+  box-sizing: border-box;
 }
 
-.inmet-alert-badge:hover {
-  background: rgba(255, 255, 255, 0.22);
-  border-color: var(--cream);
+[data-theme="dark"] .layer-inmet-card {
+  background: rgba(234, 88, 12, 0.15);
+  border-color: rgba(234, 88, 12, 0.4);
+}
+
+.btn-inmet-pill {
+  width: 100%;
+  box-sizing: border-box;
+  background: #ea580c;
+  color: #ffffff;
+  border: none;
+  border-radius: 4px;
+  padding: 5px 8px;
+  font-size: 0.70rem;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.15s ease;
+  box-shadow: 0 1px 3px rgba(234, 88, 12, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  margin-top: 4px;
+}
+
+.btn-inmet-pill:hover {
+  background: #c2410c;
   transform: translateY(-1px);
+  box-shadow: 0 2px 5px rgba(234, 88, 12, 0.4);
+}
+
+.btn-inmet-pill.stable {
+  background: #16a34a;
+  box-shadow: 0 1px 3px rgba(22, 163, 74, 0.3);
+}
+
+.btn-inmet-pill.stable:hover {
+  background: #15803d;
+}
+
+/* Floating pill no mapa (canto inferior esquerdo, acima da legenda) */
+.inmet-floating-pill {
+  position: absolute;
+  bottom: 84px;
+  left: 16px;
+  z-index: 1000;
+  background: rgba(25, 30, 20, 0.90);
+  backdrop-filter: blur(4px);
+  border: 1.5px solid rgba(234, 88, 12, 0.8);
+  color: #ffffff;
+  border-radius: 20px;
+  padding: 4px 10px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
+  transition: all 0.2s ease;
+}
+
+.inmet-floating-pill:hover {
+  background: rgba(25, 30, 20, 0.98);
+  transform: translateY(-1px);
+}
+
+.inmet-floating-close {
+  background: transparent;
+  border: none;
+  color: rgba(255, 255, 255, 0.65);
+  font-size: 0.9rem;
+  cursor: pointer;
+  padding: 0 2px;
+  line-height: 1;
+}
+
+.inmet-floating-close:hover {
+  color: #ffffff;
 }
 
 .inmet-status-dot {

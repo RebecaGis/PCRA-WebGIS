@@ -261,8 +261,8 @@
     checkIntervalMs: 20 * 60 * 1000 // 20 minutos
   };
 
-  // Camada do Leaflet para renderizar as manchas poligonais dos alertas
-  const inmetAlertLayerGroup = L.layerGroup().addTo(map);
+  // Camada do Leaflet para renderizar as manchas poligonais dos alertas (Desativada por padrão)
+  const inmetAlertLayerGroup = L.layerGroup();
 
   let isPointsVisible = true;
   let isClusteringEnabled = true;
@@ -289,6 +289,7 @@
 
   const overlayLayers = {};
   window.PCRA_OVERLAY_LAYERS = overlayLayers;
+  overlayLayers.inmet_alertas = inmetAlertLayerGroup;
   const layersData = window.PCRA_LAYERS || {};
 
   function initReferenceLayers() {
@@ -4774,12 +4775,14 @@
     // INMET - Carregamento de Avisos e Controle de Interface
     // ==========================================================================
     async function carregarAlertasINMET() {
-      const badgeText = document.getElementById("inmet-text");
-      const badgeDot = document.getElementById("inmet-dot");
+      const cardDot = document.getElementById("inmet-card-dot");
+      const cardBtnText = document.getElementById("inmet-card-btn-text");
+      const btnOpenModal = document.getElementById("btn-open-inmet-modal");
+      const floatingPill = document.getElementById("inmet-floating-pill");
+      const floatingText = document.getElementById("inmet-floating-text");
+      const floatingDot = document.getElementById("inmet-floating-dot");
       const modalContent = document.getElementById("inmet-modal-content");
       const modalHeader = document.getElementById("inmet-modal-header");
-
-      if (!badgeText || !badgeDot) return;
 
       try {
         const response = await fetch(INMET_CONFIG.apiUrl, {
@@ -4797,13 +4800,21 @@
           return geocodes.includes(INMET_CONFIG.codigoIBGE);
         });
 
-        // Limpa desenhos de alertas anteriores no mapa
+        // Limpa desenhos de alertas anteriores no grupo de camadas
         inmetAlertLayerGroup.clearLayers();
 
         if (avisosJuizDeFora.length === 0) {
-          badgeText.textContent = "Clima: Estável (Sem Avisos)";
-          badgeDot.style.background = "#4ade80"; // Verde
-          badgeDot.classList.remove("active-alert");
+          if (cardBtnText) cardBtnText.textContent = "✅ Clima Estável (Sem avisos ativos)";
+          if (cardDot) {
+            cardDot.style.background = "#4ade80"; // Verde
+            cardDot.classList.remove("active-alert");
+          }
+          if (btnOpenModal) {
+            btnOpenModal.classList.add("stable");
+            btnOpenModal.style.background = "#16a34a";
+            btnOpenModal.style.color = "#ffffff";
+          }
+          if (floatingPill) floatingPill.style.display = "none";
           if (modalHeader) modalHeader.style.background = "var(--forest-dark)";
           if (modalContent) {
             modalContent.innerHTML = 
@@ -4817,31 +4828,64 @@
           return;
         }
 
-        // Seleciona o aviso com maior índice de severidade para o badge
+        // Seleciona o aviso com maior índice de severidade
         const alertaPrincipal = avisosJuizDeFora.reduce(function (max, cur) {
           return ((cur.id_severidade || 0) > (max.id_severidade || 0)) ? cur : max;
         }, avisosJuizDeFora[0]);
 
-        const corAlerta = alertaPrincipal.aviso_cor || "#facc15";
-        badgeText.textContent = alertaPrincipal.descricao + " (" + alertaPrincipal.severidade + ")";
-        badgeDot.style.background = corAlerta;
-        badgeDot.classList.add("active-alert");
-        if (modalHeader) modalHeader.style.background = corAlerta;
+        const corAlerta = alertaPrincipal.aviso_cor || "#ea580c";
+        const isYellow = (corAlerta === "#FFFE00" || corAlerta.toLowerCase() === "#fffe00");
+        const titleCor = isYellow ? "#ca8a04" : corAlerta;
+
+        if (cardBtnText) {
+          cardBtnText.textContent = "⚠️ " + alertaPrincipal.descricao + " (" + alertaPrincipal.severidade + ") · Ver " + avisosJuizDeFora.length + " avisos";
+        }
+        if (cardDot) {
+          cardDot.style.background = corAlerta;
+          cardDot.classList.add("active-alert");
+        }
+        if (btnOpenModal) {
+          btnOpenModal.classList.remove("stable");
+          btnOpenModal.style.background = corAlerta;
+          btnOpenModal.style.color = isYellow ? "#1f2937" : "#ffffff";
+        }
+
+        // Floating pill discreto no mapa
+        if (floatingPill) {
+          floatingPill.style.display = "flex";
+          floatingPill.style.borderColor = corAlerta;
+          if (floatingText) {
+            floatingText.textContent = alertaPrincipal.descricao + ": " + alertaPrincipal.severidade;
+          }
+          if (floatingDot) {
+            floatingDot.style.background = corAlerta;
+          }
+        }
+
+        if (modalHeader) {
+          modalHeader.style.background = corAlerta;
+          modalHeader.style.color = isYellow ? "#1f2937" : "#ffffff";
+        }
 
         // Constrói o conteúdo detalhado do Modal
-        let modalHtml = "<p style='margin-bottom: 12px; font-weight: 600;'>" +
-          "Avisos meteorológicos vigentes em Juiz de Fora (" + avisosJuizDeFora.length + "):" +
-        "</p>";
+        const isLayerOnMap = map.hasLayer(inmetAlertLayerGroup);
+        let modalHtml = 
+          "<div style='display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:12px;padding-bottom:10px;border-bottom:1px solid var(--line);'>" +
+            "<span style='font-weight:700;font-size:0.88rem;color:var(--text-main);'>Avisos vigentes em Juiz de Fora (" + avisosJuizDeFora.length + "):</span>" +
+            "<button type='button' id='btn-modal-toggle-layer' class='btn btn-secondary' style='font-size:0.75rem;padding:5px 10px;white-space:nowrap;font-weight:600;'>" +
+              (isLayerOnMap ? "🗺️ Ocultar mancha no mapa" : "🗺️ Ver mancha no mapa") +
+            "</button>" +
+          "</div>";
 
         avisosJuizDeFora.forEach(function (aviso) {
           const cor = aviso.aviso_cor || "#eab308";
           const riscosText = Array.isArray(aviso.riscos) ? aviso.riscos.join("<br>") : (aviso.riscos || "Acompanhe as recomendações da Defesa Civil.");
           const instrucoesText = Array.isArray(aviso.instrucoes) ? aviso.instrucoes.join("<br>") : (aviso.instrucoes || "Evite áreas de risco de deslizamento e alagamento.");
-          const titleCor = (cor === "#FFFE00" || cor.toLowerCase() === "#fffe00") ? "#ca8a04" : cor;
+          const avTitleCor = (cor === "#FFFE00" || cor.toLowerCase() === "#fffe00") ? "#ca8a04" : cor;
 
           modalHtml += 
             "<div class='inmet-alert-box' style='border-left-color: " + cor + ";'>" +
-              "<div class='inmet-alert-title' style='color: " + titleCor + ";'>" +
+              "<div class='inmet-alert-title' style='color: " + avTitleCor + ";'>" +
                 "⚠️ " + aviso.descricao + " — " + aviso.severidade +
               "</div>" +
               "<div class='inmet-alert-period'>" +
@@ -4857,7 +4901,7 @@
               "</div>" +
             "</div>";
 
-          // Se houver coordenadas poligonais da mancha do evento, renderiza no Leaflet
+          // Se houver coordenadas poligonais da mancha do evento, popula no Leaflet LayerGroup
           if (aviso.poligono) {
             try {
               let geoLayer = null;
@@ -4868,7 +4912,7 @@
                     color: cor,
                     weight: 2,
                     fillColor: cor,
-                    fillOpacity: 0.18,
+                    fillOpacity: 0.16,
                     dashArray: "4, 4"
                   }
                 });
@@ -4883,7 +4927,7 @@
                     color: cor,
                     weight: 2,
                     fillColor: cor,
-                    fillOpacity: 0.18,
+                    fillOpacity: 0.16,
                     dashArray: "4, 4"
                   });
                 }
@@ -4892,7 +4936,7 @@
               if (geoLayer) {
                 geoLayer.bindPopup(
                   "<div style='font-size: 0.82rem; line-height: 1.45; min-width: 180px;'>" +
-                    "<strong style='color: " + titleCor + "; font-size: 0.9rem;'>⚠️ " + aviso.descricao + "</strong><br>" +
+                    "<strong style='color: " + avTitleCor + "; font-size: 0.9rem;'>⚠️ " + aviso.descricao + "</strong><br>" +
                     "<span><b>Grau:</b> " + aviso.severidade + "</span><br>" +
                     "<span><b>Início:</b> " + (aviso.inicio || "—") + "</span><br>" +
                     "<span><b>Término:</b> " + (aviso.fim || "—") + "</span>" +
@@ -4901,29 +4945,78 @@
                 geoLayer.addTo(inmetAlertLayerGroup);
               }
             } catch (err) {
-              console.warn("Falha ao desenhar polígono do alerta no Leaflet:", err);
+              console.warn("Falha ao preparar polígono do alerta no Leaflet:", err);
             }
           }
         });
 
-        if (modalContent) modalContent.innerHTML = modalHtml;
+        if (modalContent) {
+          modalContent.innerHTML = modalHtml;
+          // Wire up toggle button inside modal
+          const btnModalToggle = document.getElementById("btn-modal-toggle-layer");
+          if (btnModalToggle) {
+            btnModalToggle.addEventListener("click", function () {
+              const chk = document.getElementById("toggle-inmet-alerts-layer");
+              const isCurrentlyOn = map.hasLayer(inmetAlertLayerGroup);
+              const newState = !isCurrentlyOn;
+              if (chk) chk.checked = newState;
+              if (newState) {
+                map.addLayer(inmetAlertLayerGroup);
+                btnModalToggle.textContent = "🗺️ Ocultar mancha no mapa";
+              } else {
+                map.removeLayer(inmetAlertLayerGroup);
+                btnModalToggle.textContent = "🗺️ Ver mancha no mapa";
+              }
+            });
+          }
+        }
 
       } catch (err) {
         console.error("Erro na comunicação com a API do INMET:", err);
-        badgeText.textContent = "Clima: Indisponível";
-        badgeDot.style.background = "#94a3b8";
-        badgeDot.classList.remove("active-alert");
+        if (cardBtnText) cardBtnText.textContent = "Clima: Indisponível";
+        if (cardDot) {
+          cardDot.style.background = "#94a3b8";
+          cardDot.classList.remove("active-alert");
+        }
       }
     }
 
     function setupINMETEvents() {
-      const btnInmet = document.getElementById("btn-inmet-alerts");
+      const btnOpenModal = document.getElementById("btn-open-inmet-modal");
+      const floatingPill = document.getElementById("inmet-floating-pill");
+      const floatingDismiss = document.getElementById("inmet-floating-dismiss");
       const modalInmet = document.getElementById("inmet-modal");
+      const chkLayer = document.getElementById("toggle-inmet-alerts-layer");
 
-      if (btnInmet && modalInmet) {
-        btnInmet.addEventListener("click", function (e) {
+      if (btnOpenModal && modalInmet) {
+        btnOpenModal.addEventListener("click", function (e) {
           e.preventDefault();
           modalInmet.classList.add("open");
+        });
+      }
+
+      if (floatingPill && modalInmet) {
+        floatingPill.addEventListener("click", function (e) {
+          if (e.target === floatingDismiss || (e.target && e.target.closest && e.target.closest("#inmet-floating-dismiss"))) return;
+          modalInmet.classList.add("open");
+        });
+      }
+
+      if (floatingDismiss && floatingPill) {
+        floatingDismiss.addEventListener("click", function (e) {
+          e.preventDefault();
+          e.stopPropagation();
+          floatingPill.style.display = "none";
+        });
+      }
+
+      if (chkLayer) {
+        chkLayer.addEventListener("change", function () {
+          if (this.checked) {
+            if (!map.hasLayer(inmetAlertLayerGroup)) map.addLayer(inmetAlertLayerGroup);
+          } else {
+            if (map.hasLayer(inmetAlertLayerGroup)) map.removeLayer(inmetAlertLayerGroup);
+          }
         });
       }
 
