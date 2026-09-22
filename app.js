@@ -252,6 +252,18 @@
 
   let activeBasemapLayer = basemaps["google-hybrid"].addTo(map);
 
+  // ==========================================================================
+  // Módulo de Integração INMET (Avisos de Chuva e Risco Hidrológico/Geológico)
+  // ==========================================================================
+  const INMET_CONFIG = {
+    codigoIBGE: "3136702", // Juiz de Fora - MG
+    apiUrl: "https://apiprevmet3.inmet.gov.br/avisos/ativos",
+    checkIntervalMs: 20 * 60 * 1000 // 20 minutos
+  };
+
+  // Camada do Leaflet para renderizar as manchas poligonais dos alertas
+  const inmetAlertLayerGroup = L.layerGroup().addTo(map);
+
   let isPointsVisible = true;
   let isClusteringEnabled = true;
 
@@ -4758,8 +4770,173 @@
       });
     }
 
+    // ==========================================================================
+    // INMET - Carregamento de Avisos e Controle de Interface
+    // ==========================================================================
+    async function carregarAlertasINMET() {
+      const badgeText = document.getElementById("inmet-text");
+      const badgeDot = document.getElementById("inmet-dot");
+      const modalContent = document.getElementById("inmet-modal-content");
+      const modalHeader = document.getElementById("inmet-modal-header");
+
+      if (!badgeText || !badgeDot) return;
+
+      try {
+        const response = await fetch(INMET_CONFIG.apiUrl, {
+          headers: { "Accept": "application/json" }
+        });
+
+        if (!response.ok) throw new Error("HTTP Error: " + response.status);
+
+        const payload = await response.json();
+        const todosAvisos = [...(payload.hoje || []), ...(payload.futuro || [])];
+
+        // Filtra alertas que abrangem o município de Juiz de Fora (IBGE: 3136702)
+        const avisosJuizDeFora = todosAvisos.filter(function (aviso) {
+          const geocodes = (aviso.geocodes || "").split(",");
+          return geocodes.includes(INMET_CONFIG.codigoIBGE);
+        });
+
+        // Limpa desenhos de alertas anteriores no mapa
+        inmetAlertLayerGroup.clearLayers();
+
+        if (avisosJuizDeFora.length === 0) {
+          badgeText.textContent = "Clima: Estável (Sem Avisos)";
+          badgeDot.style.background = "#4ade80"; // Verde
+          badgeDot.classList.remove("active-alert");
+          if (modalHeader) modalHeader.style.background = "var(--forest-dark)";
+          if (modalContent) {
+            modalContent.innerHTML = 
+              "<div style='text-align: center; padding: 24px;'>" +
+                "<p style='font-size: 1.05rem; color: var(--forest); font-weight: 700;'>Nenhum aviso de tempo severo ativo para Juiz de Fora.</p>" +
+                "<p style='color: var(--text-muted); font-size: 0.8rem; margin-top: 6px;'>" +
+                  "Condições climáticas regulares segundo o Instituto Nacional de Meteorologia (INMET)." +
+                "</p>" +
+              "</div>";
+          }
+          return;
+        }
+
+        // Seleciona o aviso com maior índice de severidade para o badge
+        const alertaPrincipal = avisosJuizDeFora.reduce(function (max, cur) {
+          return ((cur.id_severidade || 0) > (max.id_severidade || 0)) ? cur : max;
+        }, avisosJuizDeFora[0]);
+
+        const corAlerta = alertaPrincipal.aviso_cor || "#facc15";
+        badgeText.textContent = alertaPrincipal.descricao + " (" + alertaPrincipal.severidade + ")";
+        badgeDot.style.background = corAlerta;
+        badgeDot.classList.add("active-alert");
+        if (modalHeader) modalHeader.style.background = corAlerta;
+
+        // Constrói o conteúdo detalhado do Modal
+        let modalHtml = "<p style='margin-bottom: 12px; font-weight: 600;'>" +
+          "Avisos meteorológicos vigentes em Juiz de Fora (" + avisosJuizDeFora.length + "):" +
+        "</p>";
+
+        avisosJuizDeFora.forEach(function (aviso) {
+          const cor = aviso.aviso_cor || "#eab308";
+          const riscosText = Array.isArray(aviso.riscos) ? aviso.riscos.join("<br>") : (aviso.riscos || "Acompanhe as recomendações da Defesa Civil.");
+          const instrucoesText = Array.isArray(aviso.instrucoes) ? aviso.instrucoes.join("<br>") : (aviso.instrucoes || "Evite áreas de risco de deslizamento e alagamento.");
+          const titleCor = (cor === "#FFFE00" || cor.toLowerCase() === "#fffe00") ? "#ca8a04" : cor;
+
+          modalHtml += 
+            "<div class='inmet-alert-box' style='border-left-color: " + cor + ";'>" +
+              "<div class='inmet-alert-title' style='color: " + titleCor + ";'>" +
+                "⚠️ " + aviso.descricao + " — " + aviso.severidade +
+              "</div>" +
+              "<div class='inmet-alert-period'>" +
+                "<strong>Vigência:</strong> " + (aviso.inicio || "—") + " até " + (aviso.fim || "—") +
+              "</div>" +
+              "<div class='inmet-list-section'>" +
+                "<strong>Riscos Previstos:</strong>" +
+                "<p>" + riscosText + "</p>" +
+              "</div>" +
+              "<div class='inmet-list-section' style='margin-top: 8px;'>" +
+                "<strong>Instruções de Segurança / Campo:</strong>" +
+                "<p>" + instrucoesText + "</p>" +
+              "</div>" +
+            "</div>";
+
+          // Se houver coordenadas poligonais da mancha do evento, renderiza no Leaflet
+          if (aviso.poligono) {
+            try {
+              let geoLayer = null;
+              if (typeof aviso.poligono === "string" && aviso.poligono.trim().startsWith("{")) {
+                const geoData = JSON.parse(aviso.poligono);
+                geoLayer = L.geoJSON(geoData, {
+                  style: {
+                    color: cor,
+                    weight: 2,
+                    fillColor: cor,
+                    fillOpacity: 0.18,
+                    dashArray: "4, 4"
+                  }
+                });
+              } else if (typeof aviso.poligono === "string") {
+                const pontos = aviso.poligono.split(";").map(function (coord) {
+                  const parts = coord.trim().split(",").map(Number);
+                  return [parts[0], parts[1]];
+                }).filter(function (c) { return !isNaN(c[0]) && !isNaN(c[1]); });
+
+                if (pontos.length >= 3) {
+                  geoLayer = L.polygon(pontos, {
+                    color: cor,
+                    weight: 2,
+                    fillColor: cor,
+                    fillOpacity: 0.18,
+                    dashArray: "4, 4"
+                  });
+                }
+              }
+
+              if (geoLayer) {
+                geoLayer.bindPopup(
+                  "<div style='font-size: 0.82rem; line-height: 1.45; min-width: 180px;'>" +
+                    "<strong style='color: " + titleCor + "; font-size: 0.9rem;'>⚠️ " + aviso.descricao + "</strong><br>" +
+                    "<span><b>Grau:</b> " + aviso.severidade + "</span><br>" +
+                    "<span><b>Início:</b> " + (aviso.inicio || "—") + "</span><br>" +
+                    "<span><b>Término:</b> " + (aviso.fim || "—") + "</span>" +
+                  "</div>"
+                );
+                geoLayer.addTo(inmetAlertLayerGroup);
+              }
+            } catch (err) {
+              console.warn("Falha ao desenhar polígono do alerta no Leaflet:", err);
+            }
+          }
+        });
+
+        if (modalContent) modalContent.innerHTML = modalHtml;
+
+      } catch (err) {
+        console.error("Erro na comunicação com a API do INMET:", err);
+        badgeText.textContent = "Clima: Indisponível";
+        badgeDot.style.background = "#94a3b8";
+        badgeDot.classList.remove("active-alert");
+      }
+    }
+
+    function setupINMETEvents() {
+      const btnInmet = document.getElementById("btn-inmet-alerts");
+      const modalInmet = document.getElementById("inmet-modal");
+
+      if (btnInmet && modalInmet) {
+        btnInmet.addEventListener("click", function (e) {
+          e.preventDefault();
+          modalInmet.classList.add("open");
+        });
+      }
+
+      window.addEventListener("keydown", function (e) {
+        if (e.key === "Escape" && modalInmet && modalInmet.classList.contains("open")) {
+          modalInmet.classList.remove("open");
+        }
+      });
+    }
+
     function init() {
       setupMapeamentoParticipativoUI();
+      setupINMETEvents();
       initLogos();
       initReferenceLayers();
       setupEventListeners();
@@ -4771,6 +4948,8 @@
       fallbackToInitialPontosEncontro();
       setTimeout(function () { map.invalidateSize(); }, 150);
       syncData();
+      carregarAlertasINMET();
+      setInterval(carregarAlertasINMET, INMET_CONFIG.checkIntervalMs);
     }
 
     if (document.readyState === "loading") {

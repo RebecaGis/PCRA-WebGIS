@@ -87,6 +87,12 @@
         <span id="admin-edit-points-btn-label">Ajustar Pontos</span>
       </button>
 
+      <!-- Badge Dinâmico de Alerta Meteorológico INMET -->
+      <div id="btn-inmet-alerts" class="inmet-alert-badge" title="Clique para ver os alertas meteorológicos do INMET em Juiz de Fora">
+        <span id="inmet-dot" class="inmet-status-dot"></span>
+        <span id="inmet-text">Clima: Carregando...</span>
+      </div>
+
       <!-- Theme Toggle -->
       <button id="theme-toggle" class="btn btn-icon btn-square" title="Alternar Modo Escuro / Claro">
         <svg class="theme-icon-light" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
@@ -1181,6 +1187,19 @@
             </div>
           </div>
         </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal de Alertas Meteorológicos INMET -->
+  <div id="inmet-modal" class="inmet-modal-backdrop" onclick="if(event.target === this) this.classList.remove('open')">
+    <div class="inmet-modal-card">
+      <div id="inmet-modal-header" class="inmet-modal-header" style="background: var(--forest-dark);">
+        <span>Avisos Meteorológicos INMET · Juiz de Fora</span>
+        <button class="btn btn-square" onclick="document.getElementById('inmet-modal').classList.remove('open')">&times;</button>
+      </div>
+      <div id="inmet-modal-content" class="inmet-modal-body">
+        <!-- Preenchido dinamicamente via JS -->
       </div>
     </div>
   </div>
