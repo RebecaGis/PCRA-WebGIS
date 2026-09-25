@@ -486,6 +486,7 @@
             </label>
 
             <label class="layer-item"><input type="checkbox" class="layer-toggle-checkbox" data-layer="pontos_encontro" checked> <img src="./icones/ponto_encontro.png" style="width:17px;height:17px;object-fit:contain;vertical-align:middle;border-radius:3px;border:1px solid rgba(0,0,0,0.15);" alt="Ponto de Encontro"> <span>Pontos de Encontro (Rotas de Fuga)</span> <span id="pontos-encontro-count-badge" style="margin-left:auto;font-size:0.7rem;background:rgba(20,83,45,0.12);color:#14532d;padding:1px 6px;border-radius:99px;font-weight:700;">5</span></label>
+            <label class="layer-item"><input type="checkbox" class="layer-toggle-checkbox" data-layer="localizacao_agentes" checked> <span class="layer-symbol-emoji">👤</span> <span>Localização dos Agentes (9 agentes · E1-E5)</span> <span id="agentes-count-badge" style="margin-left:auto;font-size:0.7rem;background:rgba(29,78,216,0.12);color:#1d4ed8;padding:1px 6px;border-radius:99px;font-weight:700;">9</span></label>
             <label class="layer-item"><input type="checkbox" class="layer-toggle-checkbox" data-layer="obras_contencao" checked> <span class="layer-symbol-polygon" style="border-color:#0284c7;background:rgba(2,132,199,0.30);"></span> 🚧 Obras de Contenção · Sec. de Obras (4 polígonos)</label>
             <label class="layer-item"><input type="checkbox" class="layer-toggle-checkbox" data-layer="area_atuacao_pcra"> <span class="layer-symbol-polygon" style="border-color:#16a34a;background:rgba(22,163,74,0.25);"></span> 📍 Área de Atuação PCRA (Burnier)</label>
             <label class="layer-item"><input type="checkbox" class="layer-toggle-checkbox" data-layer="areas_prioritarias"> <span class="layer-symbol-polygon" style="border-color:#f43f5e;background:rgba(244,63,94,0.30);"></span> 🎯 Áreas Prioritárias (8 áreas · Plano de Ação)</label>
@@ -866,6 +867,22 @@
             <div class="layer-dl-actions">
               <button class="btn-dl-fmt" data-dl-layer="equipamentos" data-dl-fmt="geojson">GeoJSON</button>
               <button class="btn-dl-fmt" data-dl-layer="equipamentos" data-dl-fmt="kml">KML</button>
+            </div>
+          </div>
+
+          <!-- Localização dos Agentes Territoriais -->
+          <div class="layer-dl-row">
+            <div class="layer-dl-info">
+              <span class="layer-dl-badge" style="background:#2563eb;">👤</span>
+              <div>
+                <strong>Localização dos Agentes Territoriais</strong>
+                <span>9 agentes (E1 a E5) com coordenadas originais e aproximações</span>
+              </div>
+            </div>
+            <div class="layer-dl-actions">
+              <button class="btn-dl-fmt" data-dl-layer="localizacao_agentes" data-dl-fmt="geojson">GeoJSON</button>
+              <button class="btn-dl-fmt" data-dl-layer="localizacao_agentes" data-dl-fmt="kml">KML</button>
+              <button class="btn-dl-fmt" data-dl-layer="localizacao_agentes" data-dl-fmt="csv">CSV</button>
             </div>
           </div>
         </div>

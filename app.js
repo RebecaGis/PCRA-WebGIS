@@ -892,6 +892,64 @@
       if (isLayerChecked("equip_instituicoes_religiosas")) overlayLayers.equip_instituicoes_religiosas.addTo(map);
     }
 
+    // Camada Localização dos Agentes Territoriais (9 Agentes · E1-E5)
+    if (layersData.localizacao_agentes || (window.PCRA_LAYERS && window.PCRA_LAYERS.localizacao_agentes)) {
+      const agentesData = layersData.localizacao_agentes || window.PCRA_LAYERS.localizacao_agentes;
+      overlayLayers.localizacao_agentes = L.geoJSON(agentesData, {
+        pointToLayer: function (feat, latlng) {
+          const p = feat.properties || {};
+          const isGeo = p.tipo_localizacao === "Georreferenciada";
+          const cor = isGeo ? "#2563eb" : "#ea580c";
+          const tipoBadge = isGeo ? "📍 Georreferenciada (KMZ)" : "📐 Aproximada (Croqui 20/09)";
+          const borderStyle = isGeo ? "solid" : "dashed";
+
+          const marker = L.marker(latlng, {
+            icon: L.divIcon({
+              html: "<div class='agente-marker-pin " + (isGeo ? "pin-geo" : "pin-aprox") + "' style='background:" + cor + ";border:2.5px " + borderStyle + " #ffffff;' title='Agente " + p.agente + " (" + p.equipe + ")'>" +
+                    "<span style='font-size:11px;font-weight:800;letter-spacing:-0.3px;'>" + p.equipe + "</span>" +
+                    "<div class='agente-pin-sub' title='" + p.tipo_localizacao + "'>" + (isGeo ? "✓" : "~") + "</div>" +
+                    "</div>",
+              className: "agente-marker-icon",
+              iconSize: [32, 32],
+              iconAnchor: [16, 16],
+              popupAnchor: [0, -16]
+            })
+          });
+
+          marker.bindTooltip("<strong>👤 " + p.agente + " (" + p.equipe + ")</strong><br><small style='color:" + cor + ";font-weight:700;'>● " + p.tipo_localizacao + "</small>", {
+            direction: "top",
+            className: "custom-area-tooltip"
+          });
+
+          marker.bindPopup(
+            "<div class='popup-custom-card'>" +
+              "<div style='display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;padding-right:20px;'>" +
+                "<span style='font-size:0.68rem;font-weight:800;color:" + cor + ";background:" + cor + "15;border:1px solid " + cor + "40;padding:2px 8px;border-radius:999px;text-transform:uppercase;'>Agente Territorial PCRA</span>" +
+                "<span style='font-size:0.72rem;font-weight:800;background:" + cor + ";color:#fff;padding:2px 7px;border-radius:5px;'>Equipe " + p.equipe + "</span>" +
+              "</div>" +
+              "<div class='popup-custom-header' style='font-size:1.15rem;color:var(--forest-dark);margin-bottom:2px;'>" +
+                "👤 " + p.agente +
+              "</div>" +
+              "<div class='popup-custom-addr' style='font-size:0.80rem;font-weight:600;color:var(--text-muted);margin-bottom:8px;'>" +
+                "Parque Burnier · Divisão Territorial Atual" +
+              "</div>" +
+              "<div style='font-size:0.75rem;background:var(--bg-card,#f8fafc);border:1px solid var(--line,#e2e8f0);border-radius:6px;padding:8px;line-height:1.55;margin-bottom:8px;'>" +
+                "<div><strong>Tipo de Localização:</strong> <span style='color:" + cor + ";font-weight:700;'>" + tipoBadge + "</span></div>" +
+                "<div><strong>Origem do Dado:</strong> " + (p.origem || "—") + "</div>" +
+                "<div><strong>Coordenadas:</strong> " + latlng.lat.toFixed(5) + ", " + latlng.lng.toFixed(5) + "</div>" +
+              "</div>" +
+              "<div style='display:flex;gap:6px;'>" +
+                "<button type='button' class='btn btn-outline' style='flex:1;font-size:0.72rem;padding:5px 8px;' onclick=\"window.PCRA_FILTRAR_AGENTE && window.PCRA_FILTRAR_AGENTE('" + p.agente + "')\">🔍 Filtrar Vistorias</button>" +
+              "</div>" +
+            "</div>", { maxWidth: 280 }
+          );
+
+          return marker;
+        }
+      });
+      if (isLayerChecked("localizacao_agentes")) overlayLayers.localizacao_agentes.addTo(map);
+    }
+
     // Camada Ortofoto Sobreposta (Drone HD - Alta Resolução com Opacidade Ajustável)
     overlayLayers.ortofoto_overlay = L.tileLayer("./tiles_ortofoto/{z}/{x}/{y}.webp", {
       minZoom: 13,
@@ -1719,6 +1777,31 @@
     selectPoint(id, false);
   };
 
+  window.PCRA_FILTRAR_AGENTE = function (agentName) {
+    if (!els.agentSelect) return;
+    const cleanName = String(agentName || "").trim().toLowerCase();
+    
+    let matchValue = null;
+    for (let i = 0; i < els.agentSelect.options.length; i++) {
+      const optVal = els.agentSelect.options[i].value;
+      const optText = els.agentSelect.options[i].text.toLowerCase();
+      if (optVal !== "all" && (optText.includes(cleanName) || cleanName.includes(optText.split(" ")[0]))) {
+        matchValue = optVal;
+        break;
+      }
+    }
+
+    if (matchValue) {
+      els.agentSelect.value = matchValue;
+      currentAgentFilter = matchValue;
+      applyFilters();
+      switchTab("list");
+      if (map) map.closePopup();
+    } else {
+      alert("O(a) agente " + agentName + " não possui vistorias registradas nesta base no momento ou os dados da equipe ainda estão sendo sincronizados.");
+    }
+  };
+
   function switchTab(tabName) {
     currentTab = tabName;
     els.tabBtns.forEach(function(btn) {
@@ -2037,6 +2120,9 @@
     } else if (layerKey === "obras_contencao") {
       geojson = allLayers.obras_contencao;
       fileName = "obras_contencao_secretaria_de_obras";
+    } else if (layerKey === "localizacao_agentes") {
+      geojson = allLayers.localizacao_agentes;
+      fileName = "localizacao_agentes_territoriais";
     } else if (allLayers[layerKey]) {
       geojson = allLayers[layerKey];
     }
@@ -2242,6 +2328,10 @@
         folder.file("17_pontos_encontro_rotas_de_fuga.geojson", JSON.stringify(peGeo, null, 2));
         folder.file("17_pontos_encontro_rotas_de_fuga.kml", convertGeoJSONToKML(peGeo, "Pontos de Encontro (Rotas de Fuga)"));
       }
+      if (allLayers.localizacao_agentes) {
+        folder.file("18_localizacao_agentes_territoriais.geojson", JSON.stringify(allLayers.localizacao_agentes, null, 2));
+        folder.file("18_localizacao_agentes_territoriais.kml", convertGeoJSONToKML(allLayers.localizacao_agentes, "Localização dos Agentes Territoriais (9 agentes)"));
+      }
       // 18. README
       const readme = "=========================================================\n" +
         "PLANO COMUNITÁRIO DE REDUÇÃO DE RISCOS (PCRA) — PARQUE BURNIER\n" +
@@ -2263,7 +2353,8 @@
         "- 09_obras_contencao_secretaria_de_obras (4 polígonos de contenção da Secretaria de Obras - PJF - 13.907 m²)\n" +
         "- 10_ades_his_parque_burnier (Perímetro da Área de Especial Interesse Social)\n" +
         "- 11_equipamentos_comunitarios (Escolas, Saúde e Instituições Religiosas)\n" +
-        "- 17_pontos_encontro_rotas_de_fuga (Pontos de Encontro das Rotas de Fuga do PCRA)\n";
+        "- 17_pontos_encontro_rotas_de_fuga (Pontos de Encontro das Rotas de Fuga do PCRA)\n" +
+        "- 18_localizacao_agentes_territoriais (9 agentes territoriais E1-E5 - coordenadas e aproximações)\n";
       folder.file("LEIAME_METADADOS.txt", readme);
 
       const blob = await zip.generateAsync({ type: "blob" });
@@ -2380,6 +2471,11 @@
     // 10. Declividade ADES HIS Sobreposta
     if (isLayerActive("declividade_overlay")) {
       active.push({ type: "polygon", label: "Declividade (0-30-45% ADES HIS)", fill: [255, 193, 7], stroke: [198, 40, 40] });
+    }
+
+    // 11. Localização dos Agentes Territoriais
+    if (isLayerActive("localizacao_agentes")) {
+      active.push({ type: "point", label: "Localização dos Agentes (9 agentes · E1-E5)", fill: [37, 99, 235], stroke: [29, 78, 216] });
     }
 
     return active;

@@ -3899,3 +3899,69 @@ html, body {
   color: #e2b170;
 }
 
+/* ==========================================================
+   👤 AGENTES TERRITORIAIS (MAP PINS & BADGES)
+   ========================================================== */
+.agente-marker-icon {
+  background: transparent !important;
+  border: none !important;
+}
+
+.agente-marker-pin {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #ffffff;
+  font-family: var(--font-display, inherit);
+  font-weight: 800;
+  font-size: 11px;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.45);
+  cursor: pointer;
+  position: relative;
+  transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.2s ease;
+}
+
+.agente-marker-pin:hover {
+  transform: scale(1.18);
+  box-shadow: 0 5px 12px rgba(0, 0, 0, 0.55);
+  z-index: 1000 !important;
+}
+
+.agente-marker-pin.pin-geo {
+  background: linear-gradient(135deg, #2563eb, #1d4ed8);
+  border: 2.5px solid #ffffff;
+}
+
+.agente-marker-pin.pin-aprox {
+  background: linear-gradient(135deg, #ea580c, #c2410c);
+  border: 2.5px dashed #ffffff;
+}
+
+.agente-pin-sub {
+  position: absolute;
+  bottom: -4px;
+  right: -4px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #ffffff;
+  border: 1.5px solid #1e293b;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 8px;
+  color: #1e293b;
+  font-weight: 900;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+}
+
+[data-theme="dark"] .agente-pin-sub {
+  background: #0f172a;
+  border-color: #64748b;
+  color: #f8fafc;
+}
+
+
