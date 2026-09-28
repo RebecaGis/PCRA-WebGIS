@@ -135,6 +135,28 @@
     pdfBtnText: document.getElementById("pdf-btn-text"),
     pdfProgressBox: document.getElementById("pdf-progress-box"),
     
+    // Layout Studio Elements
+    layoutFontScaleSlider: document.getElementById("layout-font-scale-slider"),
+    fontScaleValBadge: document.getElementById("font-scale-val-badge"),
+    layoutLogoScaleSlider: document.getElementById("layout-logo-scale-slider"),
+    logoScaleValBadge: document.getElementById("logo-scale-val-badge"),
+    layoutMapZoomSlider: document.getElementById("layout-map-zoom-slider"),
+    mapZoomValBadge: document.getElementById("map-zoom-val-badge"),
+    layoutRecaptureMapBtn: document.getElementById("layout-recapture-map-btn"),
+    exportLayoutPdfBtn: document.getElementById("export-layout-pdf-btn"),
+    exportLayoutJpgBtn: document.getElementById("export-layout-jpg-btn"),
+    exportLayoutPngBtn: document.getElementById("export-layout-png-btn"),
+    layoutOpenWindowBtn: document.getElementById("layout-open-window-btn"),
+    previewZoomOutBtn: document.getElementById("preview-zoom-out-btn"),
+    previewZoomInBtn: document.getElementById("preview-zoom-in-btn"),
+    previewZoomFitBtn: document.getElementById("preview-zoom-fit-btn"),
+    previewZoom100Btn: document.getElementById("preview-zoom-100-btn"),
+    previewZoomPctBadge: document.getElementById("preview-zoom-pct-badge"),
+    previewSheetTag: document.getElementById("preview-sheet-tag"),
+    layoutStageViewport: document.getElementById("layout-stage-viewport"),
+    layoutPaperSheet: document.getElementById("layout-paper-sheet"),
+    layoutPreviewCanvas: document.getElementById("layout-preview-canvas"),
+    
     togglePointsVisibleChk: document.getElementById("toggle-points-visible-chk"),
     clusteringLabelWrapper: document.getElementById("clustering-label-wrapper"),
     toggleClusteringChk: document.getElementById("toggle-clustering-chk"),
@@ -2481,20 +2503,75 @@
     return active;
   }
 
-  async function generateCartographicPDF() {
-    if (typeof jspdf === "undefined" || typeof html2canvas === "undefined") {
-      alert("Bibliotecas de geração de PDF carregando... aguarde alguns instantes.");
-      return;
+  // ============================================================
+  // ESTÚDIO DE LAYOUT & EXPORTAÇÃO DE PRANCHAS (PDF, JPG, PNG)
+  // ============================================================
+
+  const layoutState = {
+    format: "A3",
+    orientation: "landscape",
+    fontScale: 100,
+    logoScale: 100,
+    mapZoomScale: 100,
+    title: "PLANO COMUNITÁRIO DE REDUÇÃO DE RISCOS (PCRA)",
+    subtitle: "Diagnóstico Territorial e Mapeamento de Risco · Parque Burnier",
+    incLogos: true,
+    incNorth: true,
+    incScale: true,
+    incLegend: true,
+    incSeal: true,
+    zoomFactor: 1.0,
+    isFitToScreen: true,
+    capturedMapCanvas: null,
+    isCapturing: false
+  };
+
+  const ISO_PAGE_SIZES = {
+    A0: { w_mm: 1189, h_mm: 841, label: "Grande Formato" },
+    A1: { w_mm: 841, h_mm: 594, label: "Prancha Técnica" },
+    A2: { w_mm: 594, h_mm: 420, label: "Formato Médio" },
+    A3: { w_mm: 420, h_mm: 297, label: "Executivo / Apresentação" },
+    A4: { w_mm: 297, h_mm: 210, label: "Relatório / A4" }
+  };
+
+  const cachedLogos = {
+    periferia: null,
+    pcra: null,
+    mcid: null
+  };
+
+  function preloadLayoutLogos() {
+    if (window.APP_LOGOS) {
+      if (window.APP_LOGOS.periferiaSemRisco && !cachedLogos.periferia) {
+        cachedLogos.periferia = new Image();
+        cachedLogos.periferia.src = window.APP_LOGOS.periferiaSemRisco;
+      }
+      if (window.APP_LOGOS.planosComunitarios && !cachedLogos.pcra) {
+        cachedLogos.pcra = new Image();
+        cachedLogos.pcra.src = window.APP_LOGOS.planosComunitarios;
+      }
+      if (window.APP_LOGOS.ministerioCidades && !cachedLogos.mcid) {
+        cachedLogos.mcid = new Image();
+        cachedLogos.mcid.src = window.APP_LOGOS.ministerioCidades;
+      }
+    }
+  }
+
+  async function captureMapForLayout() {
+    if (typeof html2canvas === "undefined") {
+      alert("Aguardando carregamento da biblioteca de renderização...");
+      return null;
+    }
+    const mapEl = document.getElementById("map-view");
+    if (!mapEl) return null;
+
+    layoutState.isCapturing = true;
+    if (els.pdfProgressBox) {
+      els.pdfProgressBox.style.display = "block";
+      els.pdfProgressBox.textContent = "⏳ Capturando visualização em alta definição do mapa...";
     }
 
-    if (els.pdfProgressBox) els.pdfProgressBox.style.display = "block";
-    if (els.generatePdfSubmitBtn) els.generatePdfSubmitBtn.disabled = true;
-    if (els.pdfBtnText) els.pdfBtnText.textContent = "Renderizando prancha cartográfica...";
-
     try {
-      const mapEl = document.getElementById("map-view");
-      
-      // Capture map view with exact dimensions and no scroll offset to avoid displacement
       const canvas = await html2canvas(mapEl, {
         useCORS: true,
         allowTaint: true,
@@ -2513,336 +2590,664 @@
           );
         }
       });
+      layoutState.capturedMapCanvas = canvas;
+      renderLayoutPreview();
+      return canvas;
+    } catch (err) {
+      console.error("Erro ao capturar mapa:", err);
+      return null;
+    } finally {
+      layoutState.isCapturing = false;
+      if (els.pdfProgressBox) els.pdfProgressBox.style.display = "none";
+    }
+  }
+
+  function roundRect(ctx, x, y, width, height, radius) {
+    if (typeof radius === "undefined") radius = 5;
+    ctx.beginPath();
+    ctx.moveTo(x + radius, y);
+    ctx.lineTo(x + width - radius, y);
+    ctx.quadraticCurveTo(x + width, y, x + width, y + radius);
+    ctx.lineTo(x + width, y + height - radius);
+    ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
+    ctx.lineTo(x + radius, y + height);
+    ctx.quadraticCurveTo(x, y + height, x, y + height - radius);
+    ctx.lineTo(x, y + radius);
+    ctx.quadraticCurveTo(x, y, x + radius, y);
+    ctx.closePath();
+  }
+
+  function drawCartographicPrancha(ctx, widthPx, heightPx, state) {
+    const orientation = state.orientation || "landscape";
+    const format = state.format || "A3";
+    const fontScale = (state.fontScale || 100) / 100;
+    const logoScale = (state.logoScale || 100) / 100;
+    const mapZoomScale = (state.mapZoomScale || 100) / 100;
+    const title = state.title || "PLANO COMUNITÁRIO DE REDUÇÃO DE RISCOS (PCRA)";
+    const subtitle = state.subtitle || "Diagnóstico Territorial e Mapeamento de Risco · Parque Burnier";
+    const incLogos = state.incLogos !== false;
+    const incNorth = state.incNorth !== false;
+    const incScale = state.incScale !== false;
+    const incLegend = state.incLegend !== false;
+    const incSeal = state.incSeal !== false;
+
+    // Background sheet
+    ctx.fillStyle = "#FFFFFF";
+    ctx.fillRect(0, 0, widthPx, heightPx);
+
+    // Reference scaling relative to 1400px base
+    const baseDim = orientation === "landscape" ? widthPx : heightPx;
+    const s = baseDim / 1400;
+
+    // Technical Margins (ABNT)
+    const margin = Math.round(24 * s);
+    const innerMargin = Math.round(6 * s);
+
+    // 1. External & Internal Technical Borders
+    ctx.strokeStyle = "#1B4332";
+    ctx.lineWidth = Math.max(1.5, 3 * s);
+    ctx.strokeRect(margin, margin, widthPx - 2 * margin, heightPx - 2 * margin);
+
+    ctx.strokeStyle = "#C8D2C8";
+    ctx.lineWidth = Math.max(0.8, 1 * s);
+    ctx.strokeRect(margin + innerMargin, margin + innerMargin, widthPx - 2 * (margin + innerMargin), heightPx - 2 * (margin + innerMargin));
+
+    const frameX = margin + innerMargin * 2;
+    const frameY = margin + innerMargin * 2;
+    const frameW = widthPx - 2 * frameX;
+    const frameH = heightPx - 2 * frameY;
+
+    // Header and Footer sizing
+    const headerH = Math.round((orientation === "landscape" ? 82 : 92) * s);
+    const footerH = incSeal ? Math.round((orientation === "landscape" ? 64 : 70) * s) : 0;
+    const gap = Math.round(8 * s);
+
+    const mapTopY = frameY + headerH + gap;
+    const availMapH = frameH - headerH - gap - (incSeal ? (footerH + gap) : 0);
+
+    // 2. Header Box (Cabeçalho Institucional)
+    ctx.fillStyle = "#FFFDF5";
+    ctx.fillRect(frameX, frameY, frameW, headerH);
+    ctx.strokeStyle = "#2D6A4F";
+    ctx.lineWidth = Math.max(1, 1.5 * s);
+    ctx.strokeRect(frameX, frameY, frameW, headerH);
+
+    // Header Logos
+    const logoMaxH = Math.max(10, (headerH - 16 * s) * logoScale);
+
+    if (incLogos) {
+      preloadLayoutLogos();
+      // Left Logo: Periferia sem Risco
+      if (cachedLogos.periferia && cachedLogos.periferia.complete && cachedLogos.periferia.naturalHeight > 0) {
+        const asp = cachedLogos.periferia.naturalWidth / cachedLogos.periferia.naturalHeight;
+        const lw = logoMaxH * asp;
+        const lh = logoMaxH;
+        const lx = frameX + 12 * s;
+        const ly = frameY + (headerH - lh) / 2;
+        ctx.drawImage(cachedLogos.periferia, lx, ly, lw, lh);
+      }
+
+      // Right Logos: PCRA + MCID
+      const pad = 12 * s;
+      let rightCursor = frameX + frameW - pad;
+
+      if (cachedLogos.mcid && cachedLogos.mcid.complete && cachedLogos.mcid.naturalHeight > 0) {
+        const asp2 = cachedLogos.mcid.naturalWidth / cachedLogos.mcid.naturalHeight;
+        const rw2 = logoMaxH * asp2;
+        const rh2 = logoMaxH;
+        rightCursor -= rw2;
+        ctx.drawImage(cachedLogos.mcid, rightCursor, frameY + (headerH - rh2) / 2, rw2, rh2);
+        rightCursor -= 10 * s;
+      }
+      if (cachedLogos.pcra && cachedLogos.pcra.complete && cachedLogos.pcra.naturalHeight > 0) {
+        const asp1 = cachedLogos.pcra.naturalWidth / cachedLogos.pcra.naturalHeight;
+        const rw1 = logoMaxH * asp1;
+        const rh1 = logoMaxH;
+        rightCursor -= rw1;
+        ctx.drawImage(cachedLogos.pcra, rightCursor, frameY + (headerH - rh1) / 2, rw1, rh1);
+      }
+    }
+
+    // Header Titles
+    ctx.save();
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+
+    const titleCenterX = frameX + frameW / 2;
+    const titleFontSize = Math.max(10, Math.round(15 * s * fontScale));
+    ctx.font = "bold " + titleFontSize + "px 'Cinzel', 'Montserrat', 'Helvetica Neue', Arial, sans-serif";
+    ctx.fillStyle = "#1B4332";
+    ctx.fillText(title, titleCenterX, frameY + headerH * 0.38);
+
+    const subFontSize = Math.max(8, Math.round(10.5 * s * fontScale));
+    ctx.font = "600 " + subFontSize + "px 'Montserrat', 'Helvetica Neue', Arial, sans-serif";
+    ctx.fillStyle = "#4B5563";
+    ctx.fillText(subtitle, titleCenterX, frameY + headerH * 0.70);
+    ctx.restore();
+
+    // 3. Map Viewport Rectangle
+    ctx.fillStyle = "#E2E8F0";
+    ctx.fillRect(frameX, mapTopY, frameW, availMapH);
+
+    ctx.save();
+    ctx.beginPath();
+    ctx.rect(frameX, mapTopY, frameW, availMapH);
+    ctx.clip();
+
+    if (state.capturedMapCanvas) {
+      const mapImg = state.capturedMapCanvas;
+      const coverScale = Math.max(frameW / mapImg.width, availMapH / mapImg.height) * mapZoomScale;
+      const drawW = mapImg.width * coverScale;
+      const drawH = mapImg.height * coverScale;
+      const drawX = frameX + (frameW - drawW) / 2;
+      const drawY = mapTopY + (availMapH - drawH) / 2;
+      ctx.drawImage(mapImg, drawX, drawY, drawW, drawH);
+    } else {
+      ctx.fillStyle = "#64748B";
+      ctx.font = "bold " + Math.round(14 * s) + "px sans-serif";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText("🗺️ Captura do Mapa do SIG em Carregamento...", frameX + frameW / 2, mapTopY + availMapH / 2);
+    }
+    ctx.restore();
+
+    // Map Border
+    ctx.strokeStyle = "#2D6A4F";
+    ctx.lineWidth = Math.max(1, 1.5 * s);
+    ctx.strokeRect(frameX, mapTopY, frameW, availMapH);
+
+    // 4. North Arrow (Rosa dos Ventos)
+    if (incNorth) {
+      const nx = frameX + 24 * s;
+      const ny = mapTopY + 24 * s;
+      const nr = 18 * s;
+
+      ctx.save();
+      ctx.fillStyle = "rgba(255, 253, 245, 0.92)";
+      ctx.strokeStyle = "#2D6A4F";
+      ctx.lineWidth = Math.max(1, 1.2 * s);
+      ctx.beginPath();
+      ctx.arc(nx, ny, nr + 6 * s, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.beginPath();
+      ctx.moveTo(nx, ny - nr);
+      ctx.lineTo(nx - nr * 0.35, ny + nr * 0.1);
+      ctx.lineTo(nx, ny);
+      ctx.closePath();
+      ctx.fillStyle = "#1B4332";
+      ctx.fill();
+
+      ctx.beginPath();
+      ctx.moveTo(nx, ny - nr);
+      ctx.lineTo(nx + nr * 0.35, ny + nr * 0.1);
+      ctx.lineTo(nx, ny);
+      ctx.closePath();
+      ctx.fillStyle = "#2D6A4F";
+      ctx.fill();
+
+      ctx.beginPath();
+      ctx.moveTo(nx, ny + nr);
+      ctx.lineTo(nx - nr * 0.3, ny - nr * 0.1);
+      ctx.lineTo(nx, ny);
+      ctx.closePath();
+      ctx.fillStyle = "#94A3B8";
+      ctx.fill();
+
+      ctx.beginPath();
+      ctx.moveTo(nx, ny + nr);
+      ctx.lineTo(nx + nr * 0.3, ny - nr * 0.1);
+      ctx.lineTo(nx, ny);
+      ctx.closePath();
+      ctx.fillStyle = "#CBD5E1";
+      ctx.fill();
+
+      ctx.fillStyle = "#1B4332";
+      ctx.font = "bold " + Math.round(11 * s) + "px sans-serif";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "bottom";
+      ctx.fillText("N", nx, ny - nr - 1 * s);
+      ctx.restore();
+    }
+
+    // 5. Graphic & Numeric Scale Bar
+    if (incScale) {
+      const scaleBoxW = 160 * s;
+      const scaleBoxH = 34 * s;
+      const sx = frameX + 16 * s;
+      const sy = mapTopY + availMapH - scaleBoxH - 16 * s;
+
+      ctx.save();
+      ctx.fillStyle = "rgba(255, 253, 245, 0.94)";
+      ctx.strokeStyle = "#2D6A4F";
+      ctx.lineWidth = Math.max(1, 1.2 * s);
+      ctx.beginPath();
+      roundRect(ctx, sx, sy, scaleBoxW, scaleBoxH, 4 * s);
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.font = "bold " + Math.round(6.5 * s * fontScale) + "px sans-serif";
+      ctx.fillStyle = "#1B4332";
+      ctx.textAlign = "center";
+      ctx.fillText("ESCALA GRÁFICA APROXIMADA", sx + scaleBoxW / 2, sy + 10 * s);
+
+      const barX = sx + 14 * s;
+      const barY = sy + 14 * s;
+      const barW = scaleBoxW - 28 * s;
+      const barH = 5 * s;
+      const segW = barW / 4;
+
+      for (let i = 0; i < 4; i++) {
+        ctx.fillStyle = (i % 2 === 0) ? "#1B4332" : "#FFFFFF";
+        ctx.fillRect(barX + i * segW, barY, segW, barH);
+        ctx.strokeStyle = "#1B4332";
+        ctx.lineWidth = Math.max(0.5, 0.8 * s);
+        ctx.strokeRect(barX + i * segW, barY, segW, barH);
+      }
+
+      ctx.font = "bold " + Math.round(6.2 * s * fontScale) + "px sans-serif";
+      ctx.fillStyle = "#1B4332";
+      ctx.textAlign = "center";
+      ctx.fillText("0", barX, barY + barH + 9 * s);
+      ctx.fillText("50m", barX + segW, barY + barH + 9 * s);
+      ctx.fillText("100m", barX + segW * 2, barY + barH + 9 * s);
+      ctx.fillText("200m", barX + barW, barY + barH + 9 * s);
+      ctx.restore();
+    }
+
+    // 6. Dynamic Cartographic Legend
+    if (incLegend) {
+      const activeLayers = getActiveLayersList();
+      if (activeLayers.length > 0) {
+        ctx.save();
+        const legItemH = 15 * s;
+        const legPadding = 10 * s;
+        const legW = Math.round((orientation === "landscape" ? 230 : 200) * s * Math.max(0.85, fontScale));
+        const legH = Math.round(28 * s + activeLayers.length * legItemH + legPadding);
+        const legX = frameX + frameW - legW - 14 * s;
+        const legY = mapTopY + 14 * s;
+
+        ctx.fillStyle = "rgba(255, 253, 245, 0.95)";
+        ctx.strokeStyle = "#2D6A4F";
+        ctx.lineWidth = Math.max(1, 1.2 * s);
+        ctx.beginPath();
+        roundRect(ctx, legX, legY, legW, legH, 6 * s);
+        ctx.fill();
+        ctx.stroke();
+
+        ctx.font = "bold " + Math.round(8.5 * s * fontScale) + "px sans-serif";
+        ctx.fillStyle = "#1B4332";
+        ctx.textAlign = "center";
+        ctx.fillText("LEGENDA CARTOGRÁFICA", legX + legW / 2, legY + 14 * s);
+
+        ctx.strokeStyle = "#2D6A4F";
+        ctx.lineWidth = Math.max(0.6, 0.8 * s);
+        ctx.beginPath();
+        ctx.moveTo(legX + 8 * s, legY + 19 * s);
+        ctx.lineTo(legX + legW - 8 * s, legY + 19 * s);
+        ctx.stroke();
+
+        let itemY = legY + 28 * s;
+        const itemFontSize = Math.max(6, Math.round(7.2 * s * fontScale));
+        ctx.font = itemFontSize + "px sans-serif";
+        ctx.textAlign = "left";
+        ctx.textBaseline = "middle";
+
+        activeLayers.forEach(function (layer) {
+          const iconX = legX + 14 * s;
+          if (layer.type === "point") {
+            ctx.beginPath();
+            ctx.arc(iconX, itemY, 4 * s, 0, Math.PI * 2);
+            ctx.fillStyle = "rgb(" + layer.fill.join(",") + ")";
+            ctx.fill();
+            ctx.strokeStyle = "rgb(" + layer.stroke.join(",") + ")";
+            ctx.lineWidth = 1 * s;
+            ctx.stroke();
+          } else if (layer.type === "polygon" || layer.type === "polygon_dashed") {
+            ctx.fillStyle = "rgb(" + layer.fill.join(",") + ")";
+            ctx.fillRect(iconX - 5 * s, itemY - 4 * s, 10 * s, 8 * s);
+            ctx.strokeStyle = "rgb(" + layer.stroke.join(",") + ")";
+            ctx.lineWidth = 1 * s;
+            if (layer.type === "polygon_dashed") {
+              ctx.setLineDash([2 * s, 2 * s]);
+            } else {
+              ctx.setLineDash([]);
+            }
+            ctx.strokeRect(iconX - 5 * s, itemY - 4 * s, 10 * s, 8 * s);
+            ctx.setLineDash([]);
+          }
+
+          ctx.fillStyle = "#1F2937";
+          let label = layer.label;
+          const maxTextW = legW - 32 * s;
+          if (ctx.measureText(label).width > maxTextW) {
+            while (label.length > 4 && ctx.measureText(label + "...").width > maxTextW) {
+              label = label.slice(0, -1);
+            }
+            label += "...";
+          }
+          ctx.fillText(label, iconX + 10 * s, itemY);
+          itemY += legItemH;
+        });
+
+        ctx.restore();
+      }
+    }
+
+    // 7. Technical Seal (Carimbo ABNT)
+    if (incSeal && footerH > 0) {
+      const sealY = mapTopY + availMapH + gap;
+      ctx.save();
+      ctx.fillStyle = "#FFFDF5";
+      ctx.fillRect(frameX, sealY, frameW, footerH);
+      ctx.strokeStyle = "#2D6A4F";
+      ctx.lineWidth = Math.max(1, 1.5 * s);
+      ctx.strokeRect(frameX, sealY, frameW, footerH);
+
+      const colW = frameW / 4;
+
+      ctx.strokeStyle = "#C8D2C8";
+      ctx.lineWidth = Math.max(0.6, 0.8 * s);
+      for (let c = 1; c < 4; c++) {
+        ctx.beginPath();
+        ctx.moveTo(frameX + c * colW, sealY + 4 * s);
+        ctx.lineTo(frameX + c * colW, sealY + footerH - 4 * s);
+        ctx.stroke();
+      }
+
+      const tHdrFont = "bold " + Math.max(7, Math.round(8 * s * fontScale)) + "px sans-serif";
+      const tTxtFont = Math.max(6, Math.round(7 * s * fontScale)) + "px sans-serif";
+
+      // Col 1: Projeto & Localidade
+      ctx.fillStyle = "#1B4332";
+      ctx.font = tHdrFont;
+      ctx.textAlign = "left";
+      ctx.fillText("PROJETO & LOCALIDADE", frameX + 10 * s, sealY + 15 * s);
+      ctx.fillStyle = "#374151";
+      ctx.font = tTxtFont;
+      ctx.fillText("Plano Comunitário de Redução de Riscos (PCRA)", frameX + 10 * s, sealY + 30 * s);
+      ctx.fillText("Bairro Parque Burnier · Juiz de Fora / MG", frameX + 10 * s, sealY + 45 * s);
+
+      // Col 2: Sistema de Referência
+      ctx.fillStyle = "#1B4332";
+      ctx.font = tHdrFont;
+      ctx.fillText("SISTEMA DE REFERÊNCIA", frameX + colW + 10 * s, sealY + 15 * s);
+      ctx.fillStyle = "#374151";
+      ctx.font = tTxtFont;
+      ctx.fillText("Datum: SIRGAS 2000 / WGS 84 (EPSG:4326)", frameX + colW + 10 * s, sealY + 30 * s);
+      ctx.fillText("Projeção Universal Transversa de Mercator (UTM)", frameX + colW + 10 * s, sealY + 45 * s);
+
+      // Col 3: Formato & Emissão
+      ctx.fillStyle = "#1B4332";
+      ctx.font = tHdrFont;
+      ctx.fillText("FORMATO & EMISSÃO", frameX + colW * 2 + 10 * s, sealY + 15 * s);
+      ctx.fillStyle = "#374151";
+      ctx.font = tTxtFont;
+      const fmtText = format + " (" + (orientation === "landscape" ? "Paisagem" : "Retrato") + ")";
+      ctx.fillText("Prancha: " + fmtText, frameX + colW * 2 + 10 * s, sealY + 30 * s);
+      ctx.fillText("Data: " + new Date().toLocaleDateString("pt-BR") + " · Vistorias: " + filteredRecords.length, frameX + colW * 2 + 10 * s, sealY + 45 * s);
+
+      // Col 4: Autoria & Responsabilidade
+      ctx.fillStyle = "#1B4332";
+      ctx.font = tHdrFont;
+      ctx.fillText("DESENVOLVIMENTO & SIG", frameX + colW * 3 + 10 * s, sealY + 15 * s);
+      ctx.fillStyle = "#2D6A4F";
+      ctx.font = "bold " + Math.max(7, Math.round(8 * s * fontScale)) + "px sans-serif";
+      ctx.fillText("Rebeca Diniz Moura", frameX + colW * 3 + 10 * s, sealY + 30 * s);
+      ctx.fillStyle = "#6B7280";
+      ctx.font = tTxtFont;
+      ctx.fillText("GeoDeveloper · Geotecnologia & PCRA", frameX + colW * 3 + 10 * s, sealY + 45 * s);
+
+      ctx.restore();
+    }
+  }
+
+  function renderLayoutPreview() {
+    if (!els.layoutPreviewCanvas) return;
+    const canvas = els.layoutPreviewCanvas;
+    const ctx = canvas.getContext("2d");
+
+    const isLandscape = layoutState.orientation === "landscape";
+    const baseW = isLandscape ? 1400 : 990;
+    const baseH = isLandscape ? 990 : 1400;
+
+    canvas.width = baseW;
+    canvas.height = baseH;
+
+    drawCartographicPrancha(ctx, baseW, baseH, layoutState);
+
+    // Update Sheet Dimensions Tag
+    const pageCfg = ISO_PAGE_SIZES[layoutState.format] || ISO_PAGE_SIZES["A3"];
+    const dimStr = isLandscape
+      ? `${pageCfg.w_mm} × ${pageCfg.h_mm} mm`
+      : `${pageCfg.h_mm} × ${pageCfg.w_mm} mm`;
+    const oriStr = isLandscape ? "Paisagem" : "Retrato";
+    if (els.previewSheetTag) {
+      els.previewSheetTag.textContent = `${layoutState.format} · ${oriStr} (${dimStr})`;
+    }
+
+    updateSheetZoom();
+  }
+
+  function updateSheetZoom() {
+    if (!els.layoutPaperSheet || !els.layoutPreviewCanvas || !els.layoutStageViewport) return;
+    const canvas = els.layoutPreviewCanvas;
+    const viewport = els.layoutStageViewport;
+
+    if (layoutState.isFitToScreen) {
+      const vW = viewport.clientWidth - 48;
+      const vH = viewport.clientHeight - 48;
+      if (vW > 50 && vH > 50) {
+        layoutState.zoomFactor = Math.min(vW / canvas.width, vH / canvas.height);
+      }
+    }
+
+    els.layoutPaperSheet.style.transform = "scale(" + layoutState.zoomFactor + ")";
+    if (els.previewZoomPctBadge) {
+      const pct = Math.round(layoutState.zoomFactor * 100);
+      els.previewZoomPctBadge.textContent = layoutState.isFitToScreen ? `Ajustado (${pct}%)` : `${pct}%`;
+    }
+  }
+
+  function getHighResDimensions() {
+    const isLandscape = layoutState.orientation === "landscape";
+    const pageCfg = ISO_PAGE_SIZES[layoutState.format] || ISO_PAGE_SIZES["A3"];
+    const w_mm = isLandscape ? pageCfg.w_mm : pageCfg.h_mm;
+    const h_mm = isLandscape ? pageCfg.h_mm : pageCfg.w_mm;
+
+    // At 300 DPI: 1 mm ~ 11.811 px.
+    // Clamp max dimension to 5400 px for smooth performance and safe browser canvas allocation
+    let w_px = Math.round(w_mm * 11.811);
+    let h_px = Math.round(h_mm * 11.811);
+    const maxDim = 5400;
+
+    if (w_px > maxDim || h_px > maxDim) {
+      const ratio = Math.min(maxDim / w_px, maxDim / h_px);
+      w_px = Math.round(w_px * ratio);
+      h_px = Math.round(h_px * ratio);
+    }
+
+    return { w_px, h_px, w_mm, h_mm };
+  }
+
+  function downloadBlob(blob, filename) {
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(url), 2000);
+  }
+
+  async function exportLayoutPDF() {
+    if (typeof jspdf === "undefined") {
+      alert("Biblioteca jsPDF carregando... aguarde alguns instantes.");
+      return;
+    }
+    if (els.pdfProgressBox) {
+      els.pdfProgressBox.style.display = "block";
+      els.pdfProgressBox.textContent = "⏳ Gerando prancha em PDF vetorial ABNT...";
+    }
+    if (els.exportLayoutPdfBtn) els.exportLayoutPdfBtn.disabled = true;
+
+    try {
+      if (!layoutState.capturedMapCanvas) {
+        await captureMapForLayout();
+      }
+
+      const { w_px, h_px, w_mm, h_mm } = getHighResDimensions();
+      const offCanvas = document.createElement("canvas");
+      offCanvas.width = w_px;
+      offCanvas.height = h_px;
+      const offCtx = offCanvas.getContext("2d");
+
+      drawCartographicPrancha(offCtx, w_px, h_px, layoutState);
 
       const { jsPDF } = jspdf;
       const doc = new jsPDF({
-        orientation: selectedPdfOrientation,
+        orientation: layoutState.orientation,
         unit: "mm",
-        format: selectedPdfFormat.toLowerCase()
+        format: [w_mm, h_mm]
       });
 
-      const pageWidth = doc.internal.pageSize.getWidth();
-      const pageHeight = doc.internal.pageSize.getHeight();
-      
-      // Standard A3 reference scale
-      const scale = selectedPdfOrientation === "landscape" ? (pageWidth / 420) : (pageWidth / 297);
-      const margin = 8 * Math.sqrt(scale);
-      const innerMargin = 3 * Math.sqrt(scale);
+      const imgData = offCanvas.toDataURL("image/jpeg", 0.95);
+      doc.addImage(imgData, "JPEG", 0, 0, w_mm, h_mm, undefined, "FAST");
 
-      // 1. Technical Outer Frame (Margem Técnica ABNT)
-      doc.setDrawColor(27, 67, 50);
-      doc.setLineWidth(1.0 * Math.sqrt(scale));
-      doc.rect(margin, margin, pageWidth - 2 * margin, pageHeight - 2 * margin);
-      
-      doc.setDrawColor(200, 210, 200);
-      doc.setLineWidth(0.3 * Math.sqrt(scale));
-      doc.rect(margin + 1.5 * Math.sqrt(scale), margin + 1.5 * Math.sqrt(scale), pageWidth - 2 * margin - 3 * Math.sqrt(scale), pageHeight - 2 * margin - 3 * Math.sqrt(scale));
-
-      // Header, Footer and Map dimensions
-      const headerH = (selectedPdfOrientation === "landscape" ? 24 : 26) * scale;
-      const footerH = (els.pdfIncSeal && els.pdfIncSeal.checked) ? ((selectedPdfOrientation === "landscape" ? 20 : 22) * scale) : 0;
-      
-      const frameX = margin + innerMargin;
-      const frameW = pageWidth - 2 * margin - 2 * innerMargin;
-      const headerY = margin + innerMargin;
-
-      // 2. Header Box (Cabeçalho Institucional & Título Centralizado)
-      doc.setFillColor(255, 253, 245);
-      doc.setDrawColor(45, 106, 79);
-      doc.setLineWidth(0.6 * Math.sqrt(scale));
-      doc.roundedRect(frameX, headerY, frameW, headerH, 2 * scale, 2 * scale, "FD");
-
-      const incLogos = els.pdfIncLogos && els.pdfIncLogos.checked;
-      const logosObj = window.APP_LOGOS || window.PCRA_LOGOS || {};
-      const hasLogos = incLogos && logosObj && (logosObj.periferiaSemRisco || logosObj.planosComunitarios || logosObj.ministerioCidades);
-      
-      const logosSecW = hasLogos ? (frameW * (selectedPdfOrientation === "landscape" ? 0.36 : 0.42)) : 0;
-
-      // Draw Logos in Left Section
-      if (hasLogos) {
-        let maxLogoH = headerH - 6 * scale;
-        const totalRatio = 7.7;
-        const availableLogoW = logosSecW - 14 * scale;
-        if (maxLogoH * totalRatio > availableLogoW) {
-          maxLogoH = availableLogoW / totalRatio;
-        }
-        const logoY = headerY + (headerH - maxLogoH) / 2;
-        let logoX = frameX + 4 * scale;
-
-        try {
-          if (logosObj.periferiaSemRisco) {
-            const lW = maxLogoH * 2.2;
-            doc.addImage(logosObj.periferiaSemRisco, "PNG", logoX, logoY, lW, maxLogoH);
-            logoX += lW + 3 * scale;
-          }
-          if (logosObj.planosComunitarios) {
-            const lW = maxLogoH * 2.5;
-            doc.addImage(logosObj.planosComunitarios, "PNG", logoX, logoY, lW, maxLogoH);
-            logoX += lW + 3 * scale;
-          }
-          if (logosObj.ministerioCidades) {
-            const lW = maxLogoH * 3.0;
-            doc.addImage(logosObj.ministerioCidades, "PNG", logoX, logoY, lW, maxLogoH);
-          }
-        } catch (logoErr) {
-          console.warn("Logo drawing fallback:", logoErr);
-        }
-
-        // Vertical Separator Line between Logos and Title
-        doc.setDrawColor(209, 213, 219);
-        doc.setLineWidth(0.4 * Math.sqrt(scale));
-        doc.line(frameX + logosSecW, headerY + 3 * scale, frameX + logosSecW, headerY + headerH - 3 * scale);
-      }
-
-      // Title & Subtitle (Centered in the Title Area)
-      const titleAreaW = frameW - logosSecW;
-      const titleCenterX = frameX + logosSecW + titleAreaW / 2;
-      const rawTitle = (els.pdfTitleInput && els.pdfTitleInput.value.trim()) || "PLANO COMUNITÁRIO DE REDUÇÃO DE RISCOS (PCRA)";
-      const rawSubtitle = (els.pdfSubtitleInput && els.pdfSubtitleInput.value.trim()) || "Diagnóstico Territorial e Mapeamento de Risco · Parque Burnier";
-
-      doc.setFont("helvetica", "bold");
-      doc.setFontSize(12 * scale);
-      doc.setTextColor(27, 67, 50);
-      doc.text(rawTitle, titleCenterX, headerY + headerH * 0.44, { align: "center" });
-
-      doc.setFont("helvetica", "normal");
-      doc.setFontSize(8 * scale);
-      doc.setTextColor(75, 85, 99);
-      doc.text(rawSubtitle, titleCenterX, headerY + headerH * 0.74, { align: "center" });
-
-      // 3. Technical Map Area Box
-      const mapTopY = headerY + headerH + 3 * Math.sqrt(scale);
-      const mapBottomY = footerH > 0 ? (pageHeight - margin - innerMargin - footerH - 3 * Math.sqrt(scale)) : (pageHeight - margin - innerMargin);
-      const availMapW = frameW;
-      const availMapH = mapBottomY - mapTopY;
-
-      // Fit map maintaining exact aspect ratio of captured canvas without distortion or offset
-      const cleanMapData = canvas.toDataURL("image/jpeg", 0.96);
-      const canvasAspect = canvas.width / canvas.height;
-      let targetMapW = availMapW;
-      let targetMapH = availMapW / canvasAspect;
-      let targetMapX = frameX;
-      let targetMapY = mapTopY;
-
-      if (targetMapH > availMapH) {
-        targetMapH = availMapH;
-        targetMapW = availMapH * canvasAspect;
-        targetMapX = frameX + (availMapW - targetMapW) / 2;
-      } else {
-        targetMapY = mapTopY + (availMapH - targetMapH) / 2;
-      }
-
-      // Fill background
-      doc.setFillColor(240, 243, 240);
-      doc.rect(frameX, mapTopY, availMapW, availMapH, "F");
-
-      // Insert Unstretched Map Image
-      doc.addImage(cleanMapData, "JPEG", targetMapX, targetMapY, targetMapW, targetMapH, undefined, "FAST");
-
-      // Draw Map Outer Border
-      doc.setDrawColor(45, 106, 79);
-      doc.setLineWidth(0.8 * Math.sqrt(scale));
-      doc.rect(frameX, mapTopY, availMapW, availMapH);
-
-      // 4. North Arrow Overlay Badge (Rosa dos Ventos)
-      if (els.pdfIncNorth && els.pdfIncNorth.checked) {
-        const northBadgeW = 16 * scale;
-        const northBadgeH = 22 * scale;
-        const northBadgeX = frameX + 5 * scale;
-        const northBadgeY = mapTopY + 5 * scale;
-
-        doc.setFillColor(255, 253, 245);
-        doc.setDrawColor(45, 106, 79);
-        doc.setLineWidth(0.5 * Math.sqrt(scale));
-        doc.roundedRect(northBadgeX, northBadgeY, northBadgeW, northBadgeH, 2 * scale, 2 * scale, "FD");
-
-        const cx = northBadgeX + northBadgeW / 2;
-        const cy = northBadgeY + northBadgeH * 0.62;
-
-        // North Text "N"
-        doc.setFont("helvetica", "bold");
-        doc.setFontSize(7.5 * scale);
-        doc.setTextColor(27, 67, 50);
-        doc.text("N", cx, northBadgeY + 4.8 * scale, { align: "center" });
-
-        // Compass Rose Triangles
-        const radius = 5.2 * scale;
-        doc.setFillColor(220, 38, 38);
-        doc.triangle(cx, cy - radius, cx - 2.4 * scale, cy + 1.2 * scale, cx + 2.4 * scale, cy + 1.2 * scale, "FD");
-        doc.setFillColor(27, 67, 50);
-        doc.triangle(cx, cy + radius * 0.8, cx - 2.4 * scale, cy + 1.2 * scale, cx + 2.4 * scale, cy + 1.2 * scale, "FD");
-        
-        doc.setDrawColor(255, 255, 255);
-        doc.setLineWidth(0.2 * Math.sqrt(scale));
-        doc.line(cx, cy - radius, cx, cy + radius * 0.8);
-      }
-
-      // 5. Graphic Scale Bar Overlay Badge (Escala Gráfica)
-      if (els.pdfIncScale && els.pdfIncScale.checked) {
-        const scaleBadgeW = 54 * scale;
-        const scaleBadgeH = 11 * scale;
-        const scaleBadgeX = frameX + 5 * scale;
-        const scaleBadgeY = mapTopY + availMapH - scaleBadgeH - 5 * scale;
-
-        doc.setFillColor(255, 253, 245);
-        doc.setDrawColor(45, 106, 79);
-        doc.setLineWidth(0.5 * Math.sqrt(scale));
-        doc.roundedRect(scaleBadgeX, scaleBadgeY, scaleBadgeW, scaleBadgeH, 2 * scale, 2 * scale, "FD");
-
-        // Alternating scale bar segments
-        const barX = scaleBadgeX + 3 * scale;
-        const barY = scaleBadgeY + 2.5 * scale;
-        const barW = 48 * scale;
-        const barH = 2.4 * scale;
-        const segW = barW / 4;
-
-        for (let i = 0; i < 4; i++) {
-          doc.setFillColor(i % 2 === 0 ? 27 : 255, i % 2 === 0 ? 67 : 255, i % 2 === 0 ? 50 : 255);
-          doc.setDrawColor(27, 67, 50);
-          doc.setLineWidth(0.2 * Math.sqrt(scale));
-          doc.rect(barX + i * segW, barY, segW, barH, "FD");
-        }
-
-        doc.setFont("helvetica", "bold");
-        doc.setFontSize(4.8 * scale);
-        doc.setTextColor(27, 67, 50);
-        doc.text("0", barX, barY + barH + 2.6 * scale, { align: "center" });
-        doc.text("50m", barX + segW, barY + barH + 2.6 * scale, { align: "center" });
-        doc.text("100m", barX + segW * 2, barY + barH + 2.6 * scale, { align: "center" });
-        doc.text("200m", barX + barW, barY + barH + 2.6 * scale, { align: "center" });
-      }
-
-      // 6. Dynamic Cartographic Legend (Apenas camadas selecionadas / ativas)
-      if (els.pdfIncLegend && els.pdfIncLegend.checked) {
-        const activeLayers = getActiveLayersList();
-        
-        if (activeLayers.length > 0) {
-          const legW = (selectedPdfOrientation === "landscape" ? 64 : 58) * scale;
-          const legH = (9 + activeLayers.length * 5.6) * scale;
-          const legX = frameX + availMapW - legW - 5 * scale;
-          const legY = mapTopY + 5 * scale;
-
-          doc.setFillColor(255, 253, 245);
-          doc.setDrawColor(45, 106, 79);
-          doc.setLineWidth(0.6 * Math.sqrt(scale));
-          doc.roundedRect(legX, legY, legW, legH, 2 * scale, 2 * scale, "FD");
-
-          doc.setFont("helvetica", "bold");
-          doc.setFontSize(7.2 * scale);
-          doc.setTextColor(27, 67, 50);
-          doc.text("LEGENDA CARTOGRÁFICA", legX + legW / 2, legY + 5.0 * scale, { align: "center" });
-          
-          doc.setDrawColor(45, 106, 79);
-          doc.setLineWidth(0.3 * Math.sqrt(scale));
-          doc.line(legX + 3 * scale, legY + 6.6 * scale, legX + legW - 3 * scale, legY + 6.6 * scale);
-
-          doc.setFont("helvetica", "normal");
-          doc.setFontSize(5.8 * scale);
-          doc.setTextColor(40, 40, 40);
-
-          let itemY = legY + 10.8 * scale;
-          const itemSpacing = 5.6 * scale;
-
-          activeLayers.forEach(function (item) {
-            if (item.type === "point") {
-              doc.setFillColor(item.fill[0], item.fill[1], item.fill[2]);
-              doc.setDrawColor(item.stroke[0], item.stroke[1], item.stroke[2]);
-              doc.circle(legX + 5.5 * scale, itemY - 1.0 * scale, 1.8 * scale, "FD");
-            } else if (item.type === "polygon") {
-              doc.setFillColor(item.fill[0], item.fill[1], item.fill[2]);
-              doc.setDrawColor(item.stroke[0], item.stroke[1], item.stroke[2]);
-              doc.setLineWidth(0.4 * Math.sqrt(scale));
-              doc.rect(legX + 3.8 * scale, itemY - 2.6 * scale, 3.4 * scale, 3.2 * scale, "FD");
-            } else if (item.type === "polygon_dashed") {
-              doc.setFillColor(item.fill[0], item.fill[1], item.fill[2]);
-              doc.setDrawColor(item.stroke[0], item.stroke[1], item.stroke[2]);
-              doc.setLineWidth(0.4 * Math.sqrt(scale));
-              doc.rect(legX + 3.8 * scale, itemY - 2.6 * scale, 3.4 * scale, 3.2 * scale, "FD");
-            }
-            doc.text(item.label, legX + 9.5 * scale, itemY);
-            itemY += itemSpacing;
-          });
-        }
-      }
-
-      // 7. Technical Seal Box (Carimbo / Selo ABNT no Rodapé)
-      if (footerH > 0) {
-        const sealY = mapTopY + availMapH + 3 * Math.sqrt(scale);
-        doc.setFillColor(255, 253, 245);
-        doc.setDrawColor(45, 106, 79);
-        doc.setLineWidth(0.6 * Math.sqrt(scale));
-        doc.roundedRect(frameX, sealY, frameW, footerH, 2 * scale, 2 * scale, "FD");
-
-        const colW = frameW / 4;
-
-        // Divider lines
-        doc.setDrawColor(200, 210, 200);
-        doc.setLineWidth(0.4 * Math.sqrt(scale));
-        for (let i = 1; i <= 3; i++) {
-          doc.line(frameX + colW * i, sealY + 2 * scale, frameX + colW * i, sealY + footerH - 2 * scale);
-        }
-
-        // Col 1: Project info
-        doc.setFont("helvetica", "bold");
-        doc.setFontSize(6.5 * scale);
-        doc.setTextColor(27, 67, 50);
-        doc.text("PROJETO & LOCALIDADE", frameX + 4 * scale, sealY + 5.2 * scale);
-        doc.setFont("helvetica", "normal");
-        doc.setFontSize(5.6 * scale);
-        doc.setTextColor(55, 65, 81);
-        doc.text("Plano Comunitário de Redução de Riscos (PCRA)", frameX + 4 * scale, sealY + 10.0 * scale);
-        doc.text("Bairro Parque Burnier · Juiz de Fora / MG", frameX + 4 * scale, sealY + 14.8 * scale);
-
-        // Col 2: Geodetic Datum & Projection
-        doc.setFont("helvetica", "bold");
-        doc.setFontSize(6.5 * scale);
-        doc.setTextColor(27, 67, 50);
-        doc.text("SISTEMA DE REFERÊNCIA", frameX + colW + 4 * scale, sealY + 5.2 * scale);
-        doc.setFont("helvetica", "normal");
-        doc.setFontSize(5.6 * scale);
-        doc.setTextColor(55, 65, 81);
-        doc.text("Datum: SIRGAS 2000 / WGS 84 (EPSG:4326)", frameX + colW + 4 * scale, sealY + 10.0 * scale);
-        doc.text("Projeção Universal Transversa de Mercator (UTM)", frameX + colW + 4 * scale, sealY + 14.8 * scale);
-
-        // Col 3: Format & Date
-        doc.setFont("helvetica", "bold");
-        doc.setFontSize(6.5 * scale);
-        doc.setTextColor(27, 67, 50);
-        doc.text("FORMATO & EMISSÃO", frameX + colW * 2 + 4 * scale, sealY + 5.2 * scale);
-        doc.setFont("helvetica", "normal");
-        doc.setFontSize(5.6 * scale);
-        doc.setTextColor(55, 65, 81);
-        doc.text("Prancha: " + selectedPdfFormat + " (" + (selectedPdfOrientation === "landscape" ? "Paisagem" : "Retrato") + ")", frameX + colW * 2 + 4 * scale, sealY + 10.0 * scale);
-        doc.text("Data: " + new Date().toLocaleDateString("pt-BR") + " · Vistorias: " + filteredRecords.length, frameX + colW * 2 + 4 * scale, sealY + 14.8 * scale);
-
-        // Col 4: Authorship & Signature
-        doc.setFont("helvetica", "bold");
-        doc.setFontSize(6.5 * scale);
-        doc.setTextColor(27, 67, 50);
-        doc.text("DESENVOLVIMENTO & SIG", frameX + colW * 3 + 4 * scale, sealY + 5.2 * scale);
-        doc.setFont("helvetica", "bold");
-        doc.setFontSize(6.0 * scale);
-        doc.setTextColor(45, 106, 79);
-        doc.text("Rebeca Diniz Moura", frameX + colW * 3 + 4 * scale, sealY + 10.0 * scale);
-        doc.setFont("helvetica", "normal");
-        doc.setFontSize(5.4 * scale);
-        doc.setTextColor(107, 114, 128);
-        doc.text("GeoDeveloper · Geotecnologia & PCRA", frameX + colW * 3 + 4 * scale, sealY + 14.8 * scale);
-      }
-
-      // 8. Save PDF File
-      const pdfFileName = "PCRA_Parque_Burnier_Mapa_" + selectedPdfFormat + "_" + selectedPdfOrientation + "_" + new Date().toISOString().slice(0, 10) + ".pdf";
-      doc.save(pdfFileName);
+      const dateStr = new Date().toISOString().slice(0, 10);
+      const filename = `PCRA_Parque_Burnier_Prancha_${layoutState.format}_${layoutState.orientation}_${dateStr}.pdf`;
+      doc.save(filename);
 
       if (els.pdfMapModal) els.pdfMapModal.classList.remove("open");
     } catch (err) {
-      console.error("PDF generation failed:", err);
-      alert("Erro ao gerar prancha em PDF: " + err.message);
+      console.error("Erro ao exportar PDF:", err);
+      alert("Erro ao exportar PDF: " + err.message);
     } finally {
       if (els.pdfProgressBox) els.pdfProgressBox.style.display = "none";
-      if (els.generatePdfSubmitBtn) els.generatePdfSubmitBtn.disabled = false;
-      if (els.pdfBtnText) els.pdfBtnText.textContent = "Gerar e Salvar Mapa em PDF";
+      if (els.exportLayoutPdfBtn) els.exportLayoutPdfBtn.disabled = false;
     }
+  }
+
+  async function exportLayoutJPG() {
+    if (els.pdfProgressBox) {
+      els.pdfProgressBox.style.display = "block";
+      els.pdfProgressBox.textContent = "⏳ Gerando imagem JPG (300 DPI em alta definição)...";
+    }
+    if (els.exportLayoutJpgBtn) els.exportLayoutJpgBtn.disabled = true;
+
+    try {
+      if (!layoutState.capturedMapCanvas) {
+        await captureMapForLayout();
+      }
+
+      const { w_px, h_px } = getHighResDimensions();
+      const offCanvas = document.createElement("canvas");
+      offCanvas.width = w_px;
+      offCanvas.height = h_px;
+      const offCtx = offCanvas.getContext("2d");
+
+      drawCartographicPrancha(offCtx, w_px, h_px, layoutState);
+
+      const dateStr = new Date().toISOString().slice(0, 10);
+      const filename = `PCRA_Parque_Burnier_Prancha_${layoutState.format}_${layoutState.orientation}_${dateStr}.jpg`;
+
+      offCanvas.toBlob(function (blob) {
+        if (blob) {
+          downloadBlob(blob, filename);
+          if (els.pdfMapModal) els.pdfMapModal.classList.remove("open");
+        }
+      }, "image/jpeg", 0.95);
+    } catch (err) {
+      console.error("Erro ao exportar JPG:", err);
+      alert("Erro ao exportar JPG: " + err.message);
+    } finally {
+      if (els.pdfProgressBox) els.pdfProgressBox.style.display = "none";
+      if (els.exportLayoutJpgBtn) els.exportLayoutJpgBtn.disabled = false;
+    }
+  }
+
+  async function exportLayoutPNG() {
+    if (els.pdfProgressBox) {
+      els.pdfProgressBox.style.display = "block";
+      els.pdfProgressBox.textContent = "⏳ Gerando imagem PNG (HD sem perda de qualidade)...";
+    }
+    if (els.exportLayoutPngBtn) els.exportLayoutPngBtn.disabled = true;
+
+    try {
+      if (!layoutState.capturedMapCanvas) {
+        await captureMapForLayout();
+      }
+
+      const { w_px, h_px } = getHighResDimensions();
+      const offCanvas = document.createElement("canvas");
+      offCanvas.width = w_px;
+      offCanvas.height = h_px;
+      const offCtx = offCanvas.getContext("2d");
+
+      drawCartographicPrancha(offCtx, w_px, h_px, layoutState);
+
+      const dateStr = new Date().toISOString().slice(0, 10);
+      const filename = `PCRA_Parque_Burnier_Prancha_${layoutState.format}_${layoutState.orientation}_${dateStr}.png`;
+
+      offCanvas.toBlob(function (blob) {
+        if (blob) {
+          downloadBlob(blob, filename);
+          if (els.pdfMapModal) els.pdfMapModal.classList.remove("open");
+        }
+      }, "image/png");
+    } catch (err) {
+      console.error("Erro ao exportar PNG:", err);
+      alert("Erro ao exportar PNG: " + err.message);
+    } finally {
+      if (els.pdfProgressBox) els.pdfProgressBox.style.display = "none";
+      if (els.exportLayoutPngBtn) els.exportLayoutPngBtn.disabled = false;
+    }
+  }
+
+  function openLayoutInDedicatedWindow() {
+    const pop = window.open("", "pcra_layout_dedicated", "width=1400,height=900,resizable=yes,scrollbars=yes");
+    if (!pop || pop.closed || typeof pop.closed === "undefined") {
+      alert("Aviso: Janela pop-up bloqueada pelo navegador.\n\nPara abrir o estúdio em janela separada, autorize pop-ups para este site nas opções do navegador.\n\nO estúdio continuará disponível normalmente nesta janela integrada.");
+      return;
+    }
+    const popDoc = pop.document;
+    popDoc.open();
+    popDoc.write(`<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <title>Estúdio de Layout PCRA · Janela Dedicada</title>
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    body { margin: 0; padding: 0; background: #0f172a; height: 100vh; overflow: hidden; display: flex; flex-direction: column; font-family: sans-serif; }
+    .layout-studio-window { width: 100vw; max-width: none; height: 100vh; max-height: none; border: none; border-radius: 0; }
+  </style>
+</head>
+<body>
+  <div id="pop-root"></div>
+</body>
+</html>`);
+    popDoc.close();
+
+    setTimeout(() => {
+      const modalWindow = document.querySelector(".layout-studio-window");
+      if (modalWindow && popDoc.getElementById("pop-root")) {
+        const clone = modalWindow.cloneNode(true);
+        const innerPopBtn = clone.querySelector("#layout-open-window-btn");
+        if (innerPopBtn) innerPopBtn.style.display = "none";
+        popDoc.getElementById("pop-root").appendChild(clone);
+
+        const popCanvas = clone.querySelector("#layout-preview-canvas");
+        if (popCanvas && els.layoutPreviewCanvas) {
+          popCanvas.width = els.layoutPreviewCanvas.width;
+          popCanvas.height = els.layoutPreviewCanvas.height;
+          const pctx = popCanvas.getContext("2d");
+          pctx.drawImage(els.layoutPreviewCanvas, 0, 0);
+        }
+      }
+    }, 250);
   }
 
   function setupEventListeners() {
@@ -3096,17 +3501,29 @@
     }
     els.printReportBtn.addEventListener("click", function () { window.print(); });
 
-    // PDF Map Generator Modal Controls
+    // ============================================================
+    // ESTÚDIO DE LAYOUT & EXPORTAÇÃO CONTROLS & LISTENERS
+    // ============================================================
     if (els.openPdfMapBtn) {
       els.openPdfMapBtn.addEventListener("click", function () {
-        if (els.pdfMapModal) els.pdfMapModal.classList.add("open");
+        if (els.pdfMapModal) {
+          els.pdfMapModal.classList.add("open");
+          preloadLayoutLogos();
+          // Initial map capture and render
+          captureMapForLayout();
+          setTimeout(function () {
+            updateSheetZoom();
+          }, 150);
+        }
       });
     }
+
     if (els.pdfMapCloseBtn) {
       els.pdfMapCloseBtn.addEventListener("click", function () {
         if (els.pdfMapModal) els.pdfMapModal.classList.remove("open");
       });
     }
+
     if (els.pdfMapModal) {
       els.pdfMapModal.addEventListener("click", function (e) {
         if (e.target === els.pdfMapModal) els.pdfMapModal.classList.remove("open");
@@ -3116,20 +3533,149 @@
     // Format & Orientation Pills
     els.formatPillBtns.forEach(function (btn) {
       btn.addEventListener("click", function () {
-        selectedPdfFormat = btn.dataset.format;
+        layoutState.format = btn.dataset.format;
         els.formatPillBtns.forEach(function (b) { b.classList.toggle("active", b === btn); });
-      });
-    });
-    els.orientationPillBtns.forEach(function (btn) {
-      btn.addEventListener("click", function () {
-        selectedPdfOrientation = btn.dataset.orientation;
-        els.orientationPillBtns.forEach(function (b) { b.classList.toggle("active", b === btn); });
+        renderLayoutPreview();
       });
     });
 
-    // Generate PDF Button
-    if (els.generatePdfSubmitBtn) {
-      els.generatePdfSubmitBtn.addEventListener("click", generateCartographicPDF);
+    els.orientationPillBtns.forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        layoutState.orientation = btn.dataset.orientation;
+        els.orientationPillBtns.forEach(function (b) { b.classList.toggle("active", b === btn); });
+        renderLayoutPreview();
+      });
+    });
+
+    // Real-time Sliders
+    if (els.layoutFontScaleSlider) {
+      els.layoutFontScaleSlider.addEventListener("input", function (e) {
+        layoutState.fontScale = parseInt(e.target.value, 10);
+        if (els.fontScaleValBadge) els.fontScaleValBadge.textContent = layoutState.fontScale + "%";
+        renderLayoutPreview();
+      });
+    }
+
+    if (els.layoutLogoScaleSlider) {
+      els.layoutLogoScaleSlider.addEventListener("input", function (e) {
+        layoutState.logoScale = parseInt(e.target.value, 10);
+        if (els.logoScaleValBadge) els.logoScaleValBadge.textContent = layoutState.logoScale + "%";
+        renderLayoutPreview();
+      });
+    }
+
+    if (els.layoutMapZoomSlider) {
+      els.layoutMapZoomSlider.addEventListener("input", function (e) {
+        layoutState.mapZoomScale = parseInt(e.target.value, 10);
+        if (els.mapZoomValBadge) els.mapZoomValBadge.textContent = layoutState.mapZoomScale + "%";
+        renderLayoutPreview();
+      });
+    }
+
+    // Text inputs
+    if (els.pdfTitleInput) {
+      els.pdfTitleInput.addEventListener("input", function (e) {
+        layoutState.title = e.target.value;
+        renderLayoutPreview();
+      });
+    }
+
+    if (els.pdfSubtitleInput) {
+      els.pdfSubtitleInput.addEventListener("input", function (e) {
+        layoutState.subtitle = e.target.value;
+        renderLayoutPreview();
+      });
+    }
+
+    // Cartographic Element Checkboxes
+    if (els.pdfIncLogos) {
+      els.pdfIncLogos.addEventListener("change", function (e) {
+        layoutState.incLogos = e.target.checked;
+        renderLayoutPreview();
+      });
+    }
+
+    if (els.pdfIncNorth) {
+      els.pdfIncNorth.addEventListener("change", function (e) {
+        layoutState.incNorth = e.target.checked;
+        renderLayoutPreview();
+      });
+    }
+
+    if (els.pdfIncScale) {
+      els.pdfIncScale.addEventListener("change", function (e) {
+        layoutState.incScale = e.target.checked;
+        renderLayoutPreview();
+      });
+    }
+
+    if (els.pdfIncLegend) {
+      els.pdfIncLegend.addEventListener("change", function (e) {
+        layoutState.incLegend = e.target.checked;
+        renderLayoutPreview();
+      });
+    }
+
+    if (els.pdfIncSeal) {
+      els.pdfIncSeal.addEventListener("change", function (e) {
+        layoutState.incSeal = e.target.checked;
+        renderLayoutPreview();
+      });
+    }
+
+    // Recapture Map Button
+    if (els.layoutRecaptureMapBtn) {
+      els.layoutRecaptureMapBtn.addEventListener("click", function () {
+        captureMapForLayout();
+      });
+    }
+
+    // Export Buttons
+    if (els.exportLayoutPdfBtn) {
+      els.exportLayoutPdfBtn.addEventListener("click", exportLayoutPDF);
+    }
+    if (els.exportLayoutJpgBtn) {
+      els.exportLayoutJpgBtn.addEventListener("click", exportLayoutJPG);
+    }
+    if (els.exportLayoutPngBtn) {
+      els.exportLayoutPngBtn.addEventListener("click", exportLayoutPNG);
+    }
+
+    // Viewport Zoom Toolbar
+    if (els.previewZoomInBtn) {
+      els.previewZoomInBtn.addEventListener("click", function () {
+        layoutState.isFitToScreen = false;
+        layoutState.zoomFactor = Math.min(3.0, layoutState.zoomFactor + 0.15);
+        updateSheetZoom();
+      });
+    }
+
+    if (els.previewZoomOutBtn) {
+      els.previewZoomOutBtn.addEventListener("click", function () {
+        layoutState.isFitToScreen = false;
+        layoutState.zoomFactor = Math.max(0.15, layoutState.zoomFactor - 0.15);
+        updateSheetZoom();
+      });
+    }
+
+    if (els.previewZoomFitBtn) {
+      els.previewZoomFitBtn.addEventListener("click", function () {
+        layoutState.isFitToScreen = true;
+        updateSheetZoom();
+      });
+    }
+
+    if (els.previewZoom100Btn) {
+      els.previewZoom100Btn.addEventListener("click", function () {
+        layoutState.isFitToScreen = false;
+        layoutState.zoomFactor = 1.0;
+        updateSheetZoom();
+      });
+    }
+
+    // Dedicated Window Launcher
+    if (els.layoutOpenWindowBtn) {
+      els.layoutOpenWindowBtn.addEventListener("click", openLayoutInDedicatedWindow);
     }
 
     // Setup User Layer Import (Opção 3)
@@ -3137,6 +3683,9 @@
 
     window.addEventListener("resize", function () {
       map.invalidateSize();
+      if (layoutState.isFitToScreen && els.pdfMapModal && els.pdfMapModal.classList.contains("open")) {
+        updateSheetZoom();
+      }
     });
 
     setInterval(function () {

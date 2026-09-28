@@ -75,10 +75,10 @@
         <span>Baixar Camadas</span>
       </button>
 
-      <!-- PDF Map Generator Button -->
-      <button id="open-pdf-map-btn" class="btn btn-primary btn-icon" title="Gerar e Salvar Prancha de Mapa em PDF (A0, A1, A2, A3)">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
-        <span>Mapa em PDF</span>
+      <!-- Layout & Export Studio Button -->
+      <button id="open-pdf-map-btn" class="btn btn-primary btn-icon" title="Estúdio de Layout e Exportação de Pranchas (PDF, JPG, PNG)">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
+        <span>Estúdio de Layout</span>
       </button>
 
       <!-- Admin Point Edit Mode Button (Georebs) -->
@@ -890,84 +890,176 @@
     </div>
   </div>
 
-  <!-- PDF Map Generator Modal -->
-  <div id="pdf-map-modal" class="modal-lightbox-backdrop">
-    <div class="export-dialog-card pdf-map-dialog-card" style="max-width:560px;">
-      <div class="export-dialog-header">
-        <h3>🗺️ Gerador de Prancha de Mapa em PDF</h3>
-        <button id="pdf-map-close-btn" class="modal-lightbox-close" style="position:static;font-size:1.1rem;">✕</button>
+  <!-- Studio de Layout e Exportação de Pranchas (PDF, PNG, JPG) -->
+  <div id="pdf-map-modal" class="modal-lightbox-backdrop layout-studio-backdrop">
+    <div class="layout-studio-window">
+      <!-- Studio Header -->
+      <div class="layout-studio-header">
+        <div class="layout-studio-title-area">
+          <h3>📐 Estúdio de Layout & Exportação de Pranchas</h3>
+          <span class="layout-studio-badge">Padrão Cartográfico ABNT · Alta Resolução</span>
+        </div>
+        <div class="layout-studio-header-actions">
+          <button id="layout-open-window-btn" class="btn btn-secondary btn-sm" title="Abrir Estúdio em Janela Externa Separada">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+            <span>Janela Dedicada</span>
+          </button>
+          <button id="pdf-map-close-btn" class="modal-lightbox-close" title="Fechar Estúdio">✕</button>
+        </div>
       </div>
 
-      <div class="pdf-config-body" style="display:flex;flex-direction:column;gap:12px;margin-top:12px;">
-        <!-- Paper Format Picker -->
-        <div class="pdf-cfg-section">
-          <label class="pdf-cfg-label">1. Formato do Papel (Padrão ISO 216):</label>
-          <div class="format-pills-grid">
-            <button class="format-pill-btn" data-format="A0">
-              <strong>A0</strong>
-              <span>1189 × 841 mm</span>
-              <small>Grande Formato</small>
-            </button>
-            <button class="format-pill-btn" data-format="A1">
-              <strong>A1</strong>
-              <span>841 × 594 mm</span>
-              <small>Prancha Técnica</small>
-            </button>
-            <button class="format-pill-btn" data-format="A2">
-              <strong>A2</strong>
-              <span>594 × 420 mm</span>
-              <small>Formato Médio</small>
-            </button>
-            <button class="format-pill-btn active" data-format="A3">
-              <strong>A3</strong>
-              <span>420 × 297 mm</span>
-              <small>Executivo / Apresentação</small>
-            </button>
+      <!-- Studio Main Layout: Two Columns (Controls on Left, Preview Stage on Right) -->
+      <div class="layout-studio-container">
+        <!-- Sidebar Controls -->
+        <div class="layout-studio-sidebar">
+          
+          <!-- 1. Formato do Papel (ISO 216) -->
+          <div class="pdf-cfg-section">
+            <label class="pdf-cfg-label">1. Formato do Papel (Padrão ISO 216):</label>
+            <div class="format-pills-grid format-pills-grid-5">
+              <button class="format-pill-btn" data-format="A0">
+                <strong>A0</strong>
+                <span>1189×841</span>
+                <small>Grande</small>
+              </button>
+              <button class="format-pill-btn" data-format="A1">
+                <strong>A1</strong>
+                <span>841×594</span>
+                <small>Prancha</small>
+              </button>
+              <button class="format-pill-btn" data-format="A2">
+                <strong>A2</strong>
+                <span>594×420</span>
+                <small>Médio</small>
+              </button>
+              <button class="format-pill-btn active" data-format="A3">
+                <strong>A3</strong>
+                <span>420×297</span>
+                <small>Executivo</small>
+              </button>
+              <button class="format-pill-btn" data-format="A4">
+                <strong>A4</strong>
+                <span>297×210</span>
+                <small>Relatório</small>
+              </button>
+            </div>
           </div>
-        </div>
 
-        <!-- Orientation Picker -->
-        <div class="pdf-cfg-section">
-          <label class="pdf-cfg-label">2. Orientação da Prancha:</label>
-          <div class="orientation-pills-grid">
-            <button class="orientation-pill-btn active" data-orientation="landscape">
-              <span>📐 Paisagem (Landscape)</span>
-              <small>Padrão Cartográfico Recomendado</small>
-            </button>
-            <button class="orientation-pill-btn" data-orientation="portrait">
-              <span>📄 Retrato (Portrait)</span>
-              <small>Formato Vertical</small>
-            </button>
+          <!-- 2. Orientação da Prancha -->
+          <div class="pdf-cfg-section">
+            <label class="pdf-cfg-label">2. Orientação da Prancha:</label>
+            <div class="orientation-pills-grid">
+              <button class="orientation-pill-btn active" data-orientation="landscape">
+                <span>📐 Paisagem</span>
+                <small>Padrão Cartográfico</small>
+              </button>
+              <button class="orientation-pill-btn" data-orientation="portrait">
+                <span>📄 Retrato</span>
+                <small>Formato Vertical</small>
+              </button>
+            </div>
           </div>
-        </div>
 
-        <!-- Title & Subtitle Inputs -->
-        <div class="pdf-cfg-section">
-          <label class="pdf-cfg-label">3. Identificação e Título da Prancha:</label>
-          <input type="text" id="pdf-title-input" class="pdf-text-input" value="PLANO COMUNITÁRIO DE REDUÇÃO DE RISCOS (PCRA)" placeholder="Título Principal da Prancha">
-          <input type="text" id="pdf-subtitle-input" class="pdf-text-input" style="margin-top:6px;" value="Diagnóstico Territorial e Mapeamento de Risco · Parque Burnier" placeholder="Subtítulo / Tema do Mapeamento">
-        </div>
+          <!-- 3. Ajustes de Escala em Tempo Real (Sliders) -->
+          <div class="pdf-cfg-section">
+            <label class="pdf-cfg-label">3. Proporção & Tamanhos em Tempo Real:</label>
+            <div class="slider-control-group">
+              <div class="slider-control-header">
+                <span>🔤 Escala da Tipografia (Textos)</span>
+                <span id="font-scale-val-badge" class="slider-val-badge">100%</span>
+              </div>
+              <input type="range" id="layout-font-scale-slider" min="70" max="150" step="5" value="100" class="layout-range-slider">
+              <div class="slider-minmax"><span>70%</span><span>100%</span><span>150%</span></div>
+            </div>
 
-        <!-- Elements Checklist -->
-        <div class="pdf-cfg-section">
-          <label class="pdf-cfg-label">4. Elementos Cartográficos Oficiais:</label>
-          <div class="pdf-elements-checklist">
-            <label class="layer-item"><input type="checkbox" id="pdf-inc-logos" checked> <span>🏛️ Incluir 3 Logos Oficiais no Cabeçalho (Periferia Sem Risco, PCRA, MCID)</span></label>
-            <label class="layer-item"><input type="checkbox" id="pdf-inc-north" checked> <span>🧭 Incluir Rosa dos Ventos / Indicador de Norte (N ↑)</span></label>
-            <label class="layer-item"><input type="checkbox" id="pdf-inc-scale" checked> <span>📏 Incluir Barra de Escala Gráfica e Numérica</span></label>
-            <label class="layer-item"><input type="checkbox" id="pdf-inc-legend" checked> <span>📋 Incluir Quadro de Legenda Dinâmica com Camadas Ativas</span></label>
-            <label class="layer-item"><input type="checkbox" id="pdf-inc-seal" checked> <span>✍️ Incluir Selo Técnico (Metadados SIRGAS 2000 & Autoria Rebeca Diniz)</span></label>
+            <div class="slider-control-group" style="margin-top:8px;">
+              <div class="slider-control-header">
+                <span>🏛️ Escala das Logomarcas</span>
+                <span id="logo-scale-val-badge" class="slider-val-badge">100%</span>
+              </div>
+              <input type="range" id="layout-logo-scale-slider" min="50" max="160" step="5" value="100" class="layout-range-slider">
+              <div class="slider-minmax"><span>50%</span><span>100%</span><span>160%</span></div>
+            </div>
+
+            <div class="slider-control-group" style="margin-top:8px;">
+              <div class="slider-control-header">
+                <span>🔍 Zoom / Enquadramento do Mapa</span>
+                <span id="map-zoom-val-badge" class="slider-val-badge">100%</span>
+              </div>
+              <input type="range" id="layout-map-zoom-slider" min="80" max="140" step="5" value="100" class="layout-range-slider">
+              <div class="slider-minmax"><span>80%</span><span>100%</span><span>140%</span></div>
+            </div>
           </div>
+
+          <!-- 4. Textos da Prancha -->
+          <div class="pdf-cfg-section">
+            <label class="pdf-cfg-label">4. Identificação & Textos:</label>
+            <input type="text" id="pdf-title-input" class="pdf-text-input" value="PLANO COMUNITÁRIO DE REDUÇÃO DE RISCOS (PCRA)" placeholder="Título Principal da Prancha">
+            <input type="text" id="pdf-subtitle-input" class="pdf-text-input" style="margin-top:6px;" value="Diagnóstico Territorial e Mapeamento de Risco · Parque Burnier" placeholder="Subtítulo / Tema do Mapeamento">
+          </div>
+
+          <!-- 5. Elementos Cartográficos Oficiais -->
+          <div class="pdf-cfg-section">
+            <div style="display:flex;align-items:center;justify-content:space-between;">
+              <label class="pdf-cfg-label">5. Elementos Cartográficos:</label>
+              <button id="layout-recapture-map-btn" class="btn btn-secondary btn-xs" title="Recapturar visualização atual da tela do mapa">
+                🔄 Recapturar Mapa
+              </button>
+            </div>
+            <div class="pdf-elements-checklist">
+              <label class="layer-item"><input type="checkbox" id="pdf-inc-logos" checked> <span>🏛️ Logomarcas Oficiais no Cabeçalho</span></label>
+              <label class="layer-item"><input type="checkbox" id="pdf-inc-north" checked> <span>🧭 Rosa dos Ventos / Indicador de Norte</span></label>
+              <label class="layer-item"><input type="checkbox" id="pdf-inc-scale" checked> <span>📏 Barra de Escala Gráfica e Numérica</span></label>
+              <label class="layer-item"><input type="checkbox" id="pdf-inc-legend" checked> <span>📋 Quadro de Legenda Dinâmica</span></label>
+              <label class="layer-item"><input type="checkbox" id="pdf-inc-seal" checked> <span>✍️ Selo Técnico / Carimbo ABNT</span></label>
+            </div>
+          </div>
+
+          <!-- 6. Botões de Exportação Multiformato -->
+          <div class="layout-export-actions">
+            <label class="pdf-cfg-label">6. Exportar Prancha Final:</label>
+            <div class="export-buttons-grid">
+              <button id="export-layout-pdf-btn" class="btn btn-primary export-action-btn" title="Exportar prancha em arquivo PDF vetorial com dimensões ABNT exatas">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+                <span>Salvar PDF</span>
+              </button>
+              <button id="export-layout-jpg-btn" class="btn btn-secondary export-action-btn" title="Exportar prancha em imagem JPG (300 DPI - Alta Resolução)">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                <span>Exportar JPG (300 DPI)</span>
+              </button>
+              <button id="export-layout-png-btn" class="btn btn-secondary export-action-btn" title="Exportar prancha em imagem PNG (HD sem perda de qualidade)">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                <span>Exportar PNG (HD)</span>
+              </button>
+            </div>
+            <div id="pdf-progress-box" class="layout-progress-indicator" style="display:none;">
+              ⏳ Gerando arquivo de alta resolução... por favor aguarde...
+            </div>
+          </div>
+
         </div>
 
-        <!-- Action Button -->
-        <div style="margin-top:6px;">
-          <button id="generate-pdf-submit-btn" class="btn btn-primary" style="width:100%;padding:12px;font-size:0.95rem;font-weight:700;display:flex;align-items:center;justify-content:center;gap:8px;">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
-            <span id="pdf-btn-text">Gerar e Salvar Mapa em PDF</span>
-          </button>
-          <div id="pdf-progress-box" style="display:none;margin-top:8px;text-align:center;font-size:0.80rem;color:var(--olive);font-weight:600;">
-            ⏳ Renderizando prancha cartográfica em alta resolução... aguarde...
+        <!-- Preview Stage (Canvas + Zoom Controls) -->
+        <div class="layout-studio-preview-pane">
+          <!-- Toolbar over canvas -->
+          <div class="layout-preview-toolbar">
+            <div class="preview-toolbar-left">
+              <span class="preview-sheet-tag" id="preview-sheet-tag">A3 · Paisagem (420 × 297 mm)</span>
+            </div>
+            <div class="preview-toolbar-right">
+              <button id="preview-zoom-out-btn" class="btn btn-icon btn-sm" title="Diminuir Zoom do Preview">－</button>
+              <span id="preview-zoom-pct-badge" class="preview-zoom-badge">Ajustado</span>
+              <button id="preview-zoom-in-btn" class="btn btn-icon btn-sm" title="Aumentar Zoom do Preview">＋</button>
+              <button id="preview-zoom-fit-btn" class="btn btn-secondary btn-sm" title="Ajustar Prancha à Tela">Ajustar à Tela</button>
+              <button id="preview-zoom-100-btn" class="btn btn-secondary btn-sm" title="Tamanho Real (100%)">100%</button>
+            </div>
+          </div>
+
+          <!-- Viewport Stage -->
+          <div class="layout-stage-viewport" id="layout-stage-viewport">
+            <div class="layout-paper-sheet" id="layout-paper-sheet">
+              <canvas id="layout-preview-canvas"></canvas>
+            </div>
           </div>
         </div>
       </div>

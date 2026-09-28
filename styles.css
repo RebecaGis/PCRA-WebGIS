@@ -2733,10 +2733,108 @@ html, body {
   border-color: var(--forest-dark);
 }
 
-/* PDF Map Dialog & Config */
-.pdf-map-dialog-card {
-  max-height: 90vh;
+/* ============================================================
+   ESTÚDIO DE LAYOUT & EXPORTAÇÃO DE PRANCHAS (PDF, JPG, PNG)
+   ============================================================ */
+
+.layout-studio-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.75);
+  backdrop-filter: blur(5px);
+  z-index: 10000;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+
+.layout-studio-backdrop.open {
+  display: flex;
+}
+
+.layout-studio-window {
+  background: var(--paper, #fdfbf7);
+  border: 2px solid var(--forest, #2d6a4f);
+  border-radius: 12px;
+  width: 96vw;
+  max-width: 1480px;
+  height: 94vh;
+  max-height: 920px;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.5);
+  overflow: hidden;
+  animation: studioPop 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes studioPop {
+  from { opacity: 0; transform: scale(0.97); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+.layout-studio-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 18px;
+  background: #f4efe6;
+  border-bottom: 1.5px solid var(--line, #d8d3c5);
+  flex-shrink: 0;
+}
+
+.layout-studio-title-area {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.layout-studio-title-area h3 {
+  margin: 0;
+  font-family: var(--font-display, inherit);
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--forest-dark, #1b4332);
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.layout-studio-badge {
+  background: var(--sage, #d8f3dc);
+  color: var(--forest-dark, #1b4332);
+  font-size: 0.70rem;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 999px;
+  border: 1px solid var(--forest, #2d6a4f);
+}
+
+.layout-studio-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.layout-studio-container {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+/* Sidebar Controls */
+.layout-studio-sidebar {
+  width: 380px;
+  min-width: 340px;
+  max-width: 400px;
   overflow-y: auto;
+  padding: 14px 16px;
+  background: #fffdf9;
+  border-right: 1.5px solid var(--line, #d8d3c5);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  flex-shrink: 0;
 }
 
 .pdf-cfg-section {
@@ -2747,7 +2845,7 @@ html, body {
 
 .pdf-cfg-label {
   font-family: var(--font-display);
-  font-size: 0.78rem;
+  font-size: 0.76rem;
   font-weight: 700;
   color: var(--forest-dark);
   text-transform: uppercase;
@@ -2760,12 +2858,16 @@ html, body {
   gap: 6px;
 }
 
+.format-pills-grid-5 {
+  grid-template-columns: repeat(5, 1fr);
+}
+
 .format-pill-btn {
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 8px 4px;
-  border-radius: 6px 14px 6px 10px;
+  padding: 6px 2px;
+  border-radius: 6px 12px 6px 10px;
   border: 2px solid var(--line);
   background: #fffdf5;
   cursor: pointer;
@@ -2773,22 +2875,22 @@ html, body {
 }
 
 .format-pill-btn strong {
-  font-size: 1.1rem;
+  font-size: 0.95rem;
   color: var(--forest-dark);
   font-family: var(--font-display);
 }
 
 .format-pill-btn span {
-  font-size: 0.65rem;
+  font-size: 0.60rem;
   color: var(--muted);
   font-family: var(--font-mono);
 }
 
 .format-pill-btn small {
-  font-size: 0.62rem;
+  font-size: 0.58rem;
   color: var(--olive);
   font-weight: 600;
-  margin-top: 2px;
+  margin-top: 1px;
 }
 
 .format-pill-btn:hover {
@@ -2812,8 +2914,8 @@ html, body {
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 8px;
-  border-radius: 6px 14px 6px 10px;
+  padding: 6px;
+  border-radius: 6px 12px 6px 10px;
   border: 2px solid var(--line);
   background: #fffdf5;
   cursor: pointer;
@@ -2821,13 +2923,13 @@ html, body {
 }
 
 .orientation-pill-btn span {
-  font-size: 0.82rem;
+  font-size: 0.78rem;
   font-weight: 700;
   color: var(--forest-dark);
 }
 
 .orientation-pill-btn small {
-  font-size: 0.68rem;
+  font-size: 0.65rem;
   color: var(--muted);
 }
 
@@ -2842,12 +2944,53 @@ html, body {
   box-shadow: 0 0 0 2px var(--forest);
 }
 
+/* Sliders */
+.slider-control-group {
+  background: #fffdf5;
+  border: 1.5px solid var(--line);
+  border-radius: 6px 12px 6px 10px;
+  padding: 6px 10px;
+}
+
+.slider-control-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.74rem;
+  font-weight: 700;
+  color: var(--forest-dark);
+}
+
+.slider-val-badge {
+  background: var(--forest);
+  color: #fff;
+  font-size: 0.68rem;
+  font-family: var(--font-mono);
+  padding: 1px 6px;
+  border-radius: 4px;
+}
+
+.layout-range-slider {
+  width: 100%;
+  accent-color: var(--forest);
+  cursor: pointer;
+  margin: 4px 0 2px 0;
+  height: 6px;
+}
+
+.slider-minmax {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.60rem;
+  color: var(--muted);
+}
+
 .pdf-text-input {
   width: 100%;
-  padding: 8px 12px;
+  padding: 6px 10px;
   border: 1.5px solid var(--line-strong);
-  border-radius: 6px 12px 6px 10px;
-  font-size: 0.82rem;
+  border-radius: 6px 10px 6px 8px;
+  font-size: 0.78rem;
   background: #fffdf5;
   color: var(--text-main);
   font-weight: 600;
@@ -2862,17 +3005,132 @@ html, body {
 .pdf-elements-checklist {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 3px;
   background: #fffdf5;
   border: 1.5px solid var(--line);
   border-radius: 6px 12px 6px 10px;
-  padding: 8px 10px;
+  padding: 6px 8px;
 }
 
 .pdf-elements-checklist .layer-item {
-  font-size: 0.74rem;
+  font-size: 0.72rem;
   font-weight: 600;
   color: var(--forest-dark);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* Export Buttons */
+.layout-export-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 4px;
+  padding-top: 8px;
+  border-top: 1.5px dashed var(--line);
+}
+
+.export-buttons-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.export-action-btn {
+  width: 100%;
+  padding: 9px 12px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border-radius: 6px 12px 6px 10px;
+}
+
+.layout-progress-indicator {
+  margin-top: 6px;
+  text-align: center;
+  font-size: 0.76rem;
+  color: var(--forest-dark);
+  font-weight: 700;
+  padding: 6px;
+  background: var(--sage);
+  border-radius: 6px;
+  border: 1px solid var(--forest);
+}
+
+/* Preview Pane & Stage */
+.layout-studio-preview-pane {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  background: #1e293b;
+  position: relative;
+  overflow: hidden;
+}
+
+.layout-preview-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 16px;
+  background: #0f172a;
+  border-bottom: 1px solid #334155;
+  color: #e2e8f0;
+  flex-shrink: 0;
+}
+
+.preview-sheet-tag {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #94a3b8;
+  font-family: var(--font-mono);
+}
+
+.preview-toolbar-right {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.preview-zoom-badge {
+  font-size: 0.74rem;
+  font-weight: 700;
+  color: #38bdf8;
+  font-family: var(--font-mono);
+  min-width: 48px;
+  text-align: center;
+}
+
+.layout-stage-viewport {
+  flex: 1;
+  overflow: auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  position: relative;
+  background-image: 
+    radial-gradient(#334155 1px, transparent 1px);
+  background-size: 20px 20px;
+}
+
+.layout-paper-sheet {
+  background: #ffffff;
+  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.65), 0 0 0 1px rgba(255, 255, 255, 0.1);
+  transform-origin: center center;
+  transition: transform 0.15s ease-out;
+  display: inline-block;
+  line-height: 0;
+}
+
+#layout-preview-canvas {
+  display: block;
+  max-width: none;
 }
 
 /* Import Layer Modal & Dropzone */
